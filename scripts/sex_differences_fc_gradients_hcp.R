@@ -1,7 +1,23 @@
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------  
 
+# Project: Sex differences in brain organization
+  
+# Content: Linear regression analyses for sex contrast in gradient eigenvalues
+  
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------  
+  
+  
+  
+  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# SET UP 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
-####### Load packages #######
+# Load packages
 require(rstudioapi) # gets path of script  
 require(tidyverse)
 require(plyr)  # ddply
@@ -31,62 +47,175 @@ require(plyr)  # ddply
 # require(emmeans)  # for Estimated Marginal Means, aka Least-Squares Means
 
 
-
-
-
-###### Directories #######
+# Clear environment
+rm(list = ls())
 
 # set up directories
 codedir = dirname(getActiveDocumentContext()$path)  # get path to current script
 datadir = '/data/p_02667/sex_diff_gradients/data/'
 resdir = '/data/p_02667/sex_diff_gradients/results/hcp/'
 
-
 # set directory to path of current script
 setwd(codedir) 
 
 
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# DEFINING FUNCTIONS 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-###### Get data ######
+  
+### Descriptives
+  
+summarise.descriptives <- function(df, variable){
+  
+  '
+  - summarizes main descriptives: mean, sd, min, max, sem, IQR
+  - to supply: dataframe and variable of interest
+  - was not able to make summarise by Gender work
+  '
+  
+  summarise(df,
+            mean = mean(variable),
+            sd = sd(variable),
+            min = min(variable),
+            max = max(variable),
+            sem = sd(variable)/sqrt(length(variable)),
+            IQR = IQR(variable))
+}
 
-# Aligned gradient values
+
+
+
+### Linear Regression
+
+lm.sex_age_icv <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model including sex, age and ICV as independent variables
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for sex contrast
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val_sex = vector(mode = "double", length = ncol(df_dv))  
+  p_val_sex = vector(mode = "double", length = ncol(df_dv))
+  
+  # Degrees of Freedom = N (subjects) - number of IV (3 *** HARD-CODED FOR THIS SPECIFIC LM MODEL ***) - 1 (mean)
+  DoF = nrow(df_dv) - 3 -1
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    # Fit a linear model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV
+    lm_fit = lm(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol)
+    
+    # Extract from summary of lm_fit the t- and p-values
+    # summary(lm_fit)$coefficients[row, column]; row = 1 sex, 2 Age, 3 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
+    t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
+    p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val_sex = p.adjust(p_val_sex, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex)
+  
+  return(output_df)
+}
+
+
+lm.sex_age <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model including sex and age as independent variables
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for sex contrast
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val_sex = vector(mode = "double", length = ncol(df_dv))  
+  p_val_sex = vector(mode = "double", length = ncol(df_dv))
+  
+  # Degrees of Freedom = N (subjects) - number of IV (2 *** HARD-CODED FOR THIS SPECIFIC LM MODEL ***) - 1 (mean)
+  DoF = nrow(df_dv) - 2 -1
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    # Fit a linear model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV
+    lm_fit = lm(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs)
+    
+    # Extract from summary of lm_fit the t- and p-values
+    # summary(lm_fit)$coefficients[row, column]; row = 1 sex, 2 Age, 3 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
+    t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
+    p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val_sex = p.adjust(p_val_sex, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex)
+  
+  return(output_df)
+}
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# PREPARE DATA 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+###### Full Sample
+  
+# Aligned gradient values 
 array_aligned_G1 = read.csv(paste(resdir, 'array_aligned_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 array_aligned_G2 = read.csv(paste(resdir, 'array_aligned_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 array_aligned_G3 = read.csv(paste(resdir, 'array_aligned_G3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
+# class(array_aligned_G1)
+# typeof(array_aligned_G1)
 dim(array_aligned_G1)
 length(array_aligned_G1$X1)
 
-# # Dataframe containing all aligned gradients
-# aligned_gradients = do.call(rbind, Map(data.frame, G1 = array_aligned_G1, G2 = array_aligned_G2, G3 = array_aligned_G3))
-# str(aligned_gradients)
-# ## PROBLEM: concatenates everything, doesnt't keep the 400 parcels separate for each subject - think about this...
+# Descriptives 
+merged_demographics_cleaned = read.csv(paste(resdir, 'merged_demographics_cleaned.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+
+###### Unrelated Sample
+
+# Aligned gradient values (unrelated sample)
+array_aligned_G1_unrel_1 = read.csv(paste(resdir, 'array_aligned_G1_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+array_aligned_G2_unrel_1 = read.csv(paste(resdir, 'array_aligned_G2_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+array_aligned_G3_unrel_1 = read.csv(paste(resdir, 'array_aligned_G3_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 # Descriptives
-merged_demographics_cleaned = read.csv('merged_demographics_cleaned.csv', fileEncoding = 'UTF-8-BOM')
+merged_demographics_cleaned_unrel_1 = read.csv(paste(resdir, 'merged_demographics_cleaned_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# DESCRIPTIVES 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-###### Descriptives ######
-
+###### Full Sample
+  
 str(merged_demographics_cleaned, list.len=ncol(merged_demographics_cleaned))  # untruncated output
+dim(merged_demographics_cleaned)
 
 
-### Age
+# Sample size by sex
+ftable(merged_demographics_cleaned$Gender)
 
-summarise(merged_demographics_cleaned,
-          mean = mean(Age_in_Yrs),
-          sd = sd(Age_in_Yrs),
-          min = min(Age_in_Yrs),
-          max = max(Age_in_Yrs),
-          sem = sd(Age_in_Yrs)/sqrt(length(Age_in_Yrs)),
-          IQR = IQR(Age_in_Yrs))
 
+# Age
+summarise.descriptives(merged_demographics_cleaned, merged_demographics_cleaned$Age_in_Yrs)
 
 # Age by sex
-
 ddply(merged_demographics_cleaned, 'Gender', summarise,
           mean = mean(Age_in_Yrs),
           sd = sd(Age_in_Yrs),
@@ -95,32 +224,154 @@ ddply(merged_demographics_cleaned, 'Gender', summarise,
           sem = sd(Age_in_Yrs)/sqrt(length(Age_in_Yrs)),
           IQR = IQR(Age_in_Yrs))
 
-ftable(merged_demographics_cleaned$Gender)
+
+# ICV
+summarise.descriptives(merged_demographics_cleaned, merged_demographics_cleaned$FS_IntraCranial_Vol)
+
+# ICV by sex
+ddply(merged_demographics_cleaned, 'Gender', summarise,
+      mean = mean(FS_IntraCranial_Vol),
+      sd = sd(FS_IntraCranial_Vol),
+      min = min(FS_IntraCranial_Vol),
+      max = max(FS_IntraCranial_Vol),
+      sem = sd(FS_IntraCranial_Vol)/sqrt(length(FS_IntraCranial_Vol)),
+      IQR = IQR(FS_IntraCranial_Vol))
 
 
-### ICV
 
-summarise(merged_demographics_cleaned,
-          mean = mean(FS_IntraCranial_Vol),
-          sd = sd(FS_IntraCranial_Vol),
-          min = min(FS_IntraCranial_Vol),
-          max = max(FS_IntraCranial_Vol),
-          sem = sd(FS_IntraCranial_Vol)/sqrt(length(FS_IntraCranial_Vol)),
-          IQR = IQR(FS_IntraCranial_Vol))
+###### Unrelated Sample
+
+str(merged_demographics_cleaned_unrel_1, list.len=ncol(merged_demographics_cleaned_unrel_1))  # untruncated output
+dim(merged_demographics_cleaned_unrel_1)
 
 
+# Sample size by sex
+ftable(merged_demographics_cleaned_unrel_1$Gender)
 
 
-###### Linear models ######
+# Age
+summarise.descriptives(merged_demographics_cleaned_unrel_1, merged_demographics_cleaned_unrel_1$Age_in_Yrs)
 
-lm_fit = lm(array_aligned_G1$X1 ~ merged_demographics_cleaned$Gender + merged_demographics_cleaned$Age_in_Yrs)
-summary(lm_fit)
+# Age by sex
+ddply(merged_demographics_cleaned_unrel_1, 'Gender', summarise,
+      mean = mean(Age_in_Yrs),
+      sd = sd(Age_in_Yrs),
+      min = min(Age_in_Yrs),
+      max = max(Age_in_Yrs),
+      sem = sd(Age_in_Yrs)/sqrt(length(Age_in_Yrs)),
+      IQR = IQR(Age_in_Yrs))
 
-summary(lm_fit)$terms
 
-names(summary(lm_fit))
+# ICV
+summarise.descriptives(merged_demographics_cleaned_unrel_1, merged_demographics_cleaned_unrel_1$FS_IntraCranial_Vol)
 
-p_val2*pt(abs())
+# ICV by sex
+ddply(merged_demographics_cleaned_unrel_1, 'Gender', summarise,
+      mean = mean(FS_IntraCranial_Vol),
+      sd = sd(FS_IntraCranial_Vol),
+      min = min(FS_IntraCranial_Vol),
+      max = max(FS_IntraCranial_Vol),
+      sem = sd(FS_IntraCranial_Vol)/sqrt(length(FS_IntraCranial_Vol)),
+      IQR = IQR(FS_IntraCranial_Vol))
 
 
-# ERROR: tried unlist() but then says variable lenth differs
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# LINEAR REGRESSION 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+###### Full Sample
+  
+### model = Gradient_Eigenvalues ~ Sex + Age + ICV 
+
+# run model
+lm_G1_sex_age_icv_res = lm.sex_age_icv(df_dv = array_aligned_G1, df_iv = merged_demographics_cleaned)
+lm_G2_sex_age_icv_res = lm.sex_age_icv(df_dv = array_aligned_G2, df_iv = merged_demographics_cleaned)
+lm_G3_sex_age_icv_res = lm.sex_age_icv(df_dv = array_aligned_G3, df_iv = merged_demographics_cleaned)
+
+
+# number of significant parcels
+sum(lm_G1_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(lm_G2_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(lm_G3_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  
+
+
+
+### model = Gradient_Eigenvalues ~ Sex + Age 
+
+# run model
+lm_G1_sex_age_res = lm.sex_age(df_dv = array_aligned_G1, df_iv = merged_demographics_cleaned)
+lm_G2_sex_age_res = lm.sex_age(df_dv = array_aligned_G2, df_iv = merged_demographics_cleaned)
+lm_G3_sex_age_res = lm.sex_age(df_dv = array_aligned_G3, df_iv = merged_demographics_cleaned)
+
+# number of significant parcels
+sum(lm_G1_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(lm_G2_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(lm_G3_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  
+
+
+
+#'*STRANGE: quite different number of sig parcels between my R and Python code -> check with Giaco*
+#'*BUT: my  lm_G1_sex_age_res -> 209 corresponds to the number of sig parcels yielded by his q value calculation from my t values) -> suggests that at least the q value calculation is correct
+df_comparison_qvals = read.csv(paste(codedir, '/giaco/', 'comparison_qval_Giaco_Bianca_lmfull_sex_age_v3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+sum(df_comparison_qvals$Bianca_qval < 0.05, na.rm=TRUE)
+# ALSO SUGGESTS that t values are similar, but they are not exactly the same:
+df_comparison_qvals$Bianca_tval
+lm_G1_sex_age_res$t_val_sex
+df_comparison_qvals$Bianca_tval == lm_G1_sex_age_res$t_val_sex
+
+
+
+###### Unrelated Sample
+
+### model = Gradient_Eigenvalues ~ Sex + Age + ICV 
+
+# run model
+lm_G1_sex_age_icv_res_unrel_1 = lm.sex_age_icv(df_dv = array_aligned_G1_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
+lm_G2_sex_age_icv_res_unrel_1 = lm.sex_age_icv(df_dv = array_aligned_G2_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
+lm_G3_sex_age_icv_res_unrel_1 = lm.sex_age_icv(df_dv = array_aligned_G3_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
+
+
+# number of significant parcels
+sum(lm_G1_sex_age_icv_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(lm_G2_sex_age_icv_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  
+sum(lm_G3_sex_age_icv_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  
+
+
+
+### model = Gradient_Eigenvalues ~ Sex + Age 
+
+# run model
+lm_G1_sex_age_res_unrel_1 = lm.sex_age(df_dv = array_aligned_G1_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
+lm_G2_sex_age_res_unrel_1 = lm.sex_age(df_dv = array_aligned_G2_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
+lm_G3_sex_age_res_unrel_1 = lm.sex_age(df_dv = array_aligned_G3_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
+
+
+# number of significant parcels
+sum(lm_G1_sex_age_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(lm_G2_sex_age_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  
+sum(lm_G3_sex_age_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# EXPORT RESULTS 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+###### Full Sample
+write.csv(lm_G1_sex_age_icv_res, paste(resdir, 'R_lm_G1_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_icv_res, paste(resdir, 'R_lm_G2_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_icv_res, paste(resdir, 'R_lm_G3_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G1_sex_age_res, paste(resdir, 'R_lm_G1_sex_age_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_res, paste(resdir, 'R_lm_G2_sex_age_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_res, paste(resdir, 'R_lm_G3_sex_age_res.csv', sep = ''), row.names = FALSE)
+
+
+###### Unrelated Sample
+write.csv(lm_G1_sex_age_icv_res_unrel_1, paste(resdir, 'R_lm_G1_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_icv_res_unrel_1, paste(resdir, 'R_lm_G2_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_icv_res_unrel_1, paste(resdir, 'R_lm_G3_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G1_sex_age_res_unrel_1, paste(resdir, 'R_lm_G1_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_res_unrel_1, paste(resdir, 'R_lm_G2_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_res_unrel_1, paste(resdir, 'R_lm_G3_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
