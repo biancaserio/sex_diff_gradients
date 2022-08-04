@@ -92,9 +92,9 @@ summarise.descriptives <- function(df, variable){
 lm.sex_age_icv <- function(df_dv, df_iv) {
   
   '
-    - fits and runs linear model including sex, age and ICV as independent variables
+    - fits and runs linear model to test for SEX effects, including sex, age and ICV in the model as covariates
     - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
-    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for sex contrast
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
   '
   
   # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
@@ -130,9 +130,9 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
 lm.sex_age <- function(df_dv, df_iv) {
   
   '
-    - fits and runs linear model including sex and age as independent variables
+    - fits and runs linear model to test for SEX effects, including sex, age and ICV in the model as covariates
     - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
-    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for sex contrast
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
   '
   
   # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
