@@ -111,7 +111,7 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
     lm_fit = lm(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol)
     
     # Extract from summary of lm_fit the t- and p-values
-    # summary(lm_fit)$coefficients[row, column]; row = 1 sex, 2 Age, 3 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
+    # summary(lm_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
     t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
     p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
     
@@ -149,7 +149,7 @@ lm.sex_age <- function(df_dv, df_iv) {
     lm_fit = lm(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs)
     
     # Extract from summary of lm_fit the t- and p-values
-    # summary(lm_fit)$coefficients[row, column]; row = 1 sex, 2 Age, 3 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
+    # summary(lm_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
     t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
     p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
     
