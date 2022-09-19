@@ -4,7 +4,7 @@
 
 # Project: Sex differences in brain organization
   
-# Content: Linear regression analyses for sex contrast in gradient eigenvalues
+# Content: Linear regression analyses for sex contrast in gradient eigenvalues in HCP S1200
   
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ rm(list = ls())
 # set up directories
 codedir = dirname(getActiveDocumentContext()$path)  # get path to current script
 datadir = '/data/p_02667/sex_diff_gradients/data/'
-resdir = '/data/p_02667/sex_diff_gradients/results/hcp/'
+resdir = '/data/p_02667/sex_diff_gradients/results/HCP/'
 
 # set directory to path of current script
 setwd(codedir) 
@@ -189,12 +189,12 @@ merged_demographics_cleaned = read.csv(paste(resdir, 'merged_demographics_cleane
 ###### Unrelated Sample
 
 # Aligned gradient values (unrelated sample)
-array_aligned_G1_unrel_1 = read.csv(paste(resdir, 'array_aligned_G1_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-array_aligned_G2_unrel_1 = read.csv(paste(resdir, 'array_aligned_G2_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-array_aligned_G3_unrel_1 = read.csv(paste(resdir, 'array_aligned_G3_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+array_aligned_G1_unrel_1 = read.csv(paste(resdir, 'unrelated_sample/array_aligned_G1_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+array_aligned_G2_unrel_1 = read.csv(paste(resdir, 'unrelated_sample/array_aligned_G2_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+array_aligned_G3_unrel_1 = read.csv(paste(resdir, 'unrelated_sample/array_aligned_G3_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 # Descriptives
-merged_demographics_cleaned_unrel_1 = read.csv(paste(resdir, 'merged_demographics_cleaned_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+merged_demographics_cleaned_unrel_1 = read.csv(paste(resdir, 'unrelated_sample/merged_demographics_cleaned_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
 
@@ -369,9 +369,9 @@ write.csv(lm_G3_sex_age_res, paste(resdir, 'R_lm_G3_sex_age_res.csv', sep = ''),
 
 
 ###### Unrelated Sample
-write.csv(lm_G1_sex_age_icv_res_unrel_1, paste(resdir, 'R_lm_G1_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G2_sex_age_icv_res_unrel_1, paste(resdir, 'R_lm_G2_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G3_sex_age_icv_res_unrel_1, paste(resdir, 'R_lm_G3_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G1_sex_age_res_unrel_1, paste(resdir, 'R_lm_G1_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G2_sex_age_res_unrel_1, paste(resdir, 'R_lm_G2_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G3_sex_age_res_unrel_1, paste(resdir, 'R_lm_G3_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G1_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G1_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G2_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G3_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G1_sex_age_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G1_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G2_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G3_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
