@@ -21,6 +21,10 @@
 require(rstudioapi) # gets path of script  
 require(tidyverse)
 require(plyr)  # ddply
+require(lme4)  # for lmer (linear mixed effects model)
+require(lmerTest)  # to obtain p-values for lmer - this actually overrides lme4's lmer() and prints the p-values for the fixed effects (which aren't present in lme4's lmer())
+        # note that no p-values are printed for the random effects because p values cannot be estimated for random effects because these are latent variables without standard deviations
+
 ##require(ggplot2) #this should be included in tidyverse
 #require(qwraps2)
 # options(qwraps2_markup = "markdown") # define the markup language we are working in
@@ -41,9 +45,8 @@ require(plyr)  # ddply
 # require(chron) # to convert character variables in the format of "XX:XX:XX" to times variables (sing chron::times)
 # # display.brewer.all() # displays all color schemes
 # 
-# require(lme4)  # for lmer (linear mixed effects model)
-# require(lmerTest)  # to obtain p-values for lmer - this actually overrides lme4's lmer() and prints the p-values for the fixed effects (which aren't present in lme4's lmer())
-#                       # note that no p-values are printed for the random effects because p values cannot be estimated for random effects because these are latent variables without standard deviations
+
+
 # require(emmeans)  # for Estimated Marginal Means, aka Least-Squares Means
 
 
@@ -100,9 +103,10 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
   # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
   t_val_sex = vector(mode = "double", length = ncol(df_dv))  
   p_val_sex = vector(mode = "double", length = ncol(df_dv))
+  beta_val_sex = vector(mode = "double", length = ncol(df_dv))
   
   # Degrees of Freedom = N (subjects) - number of IV (3 *** HARD-CODED FOR THIS SPECIFIC LM MODEL ***) - 1 (mean)
-  DoF = nrow(df_dv) - 3 -1
+  #DoF = nrow(df_dv) - 3 -1
   
   # Loop over the df_dv columns (= parcels)
   for (i in seq_along(df_dv)) {
@@ -113,7 +117,8 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
     # Extract from summary of lm_fit the t- and p-values
     # summary(lm_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
     t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
-    p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
+    p_val_sex[[i]] = summary(lm_fit)$coefficients[2,4]  # if want to calculate p value by hand: p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)
+    beta_val_sex[[i]] = summary(lm_fit)$coefficients[2,1]
     
   }
   
@@ -121,13 +126,15 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
   q_val_sex = p.adjust(p_val_sex, method = "fdr")
   
   # Create output dataframe containing t-values, p-values, and q-values
-  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex)
+  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex, beta_val_sex)
   
   return(output_df)
 }
 
 
-lm.sex_age <- function(df_dv, df_iv) {
+
+
+lmer.sex_age_icv_ctrl_related <- function(df_dv, df_iv) {
   
   '
     - fits and runs linear model to test for SEX effects, including sex, age and ICV in the model as covariates
@@ -138,20 +145,27 @@ lm.sex_age <- function(df_dv, df_iv) {
   # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
   t_val_sex = vector(mode = "double", length = ncol(df_dv))  
   p_val_sex = vector(mode = "double", length = ncol(df_dv))
+  beta_val_sex = vector(mode = "double", length = ncol(df_dv))
   
-  # Degrees of Freedom = N (subjects) - number of IV (2 *** HARD-CODED FOR THIS SPECIFIC LM MODEL ***) - 1 (mean)
-  DoF = nrow(df_dv) - 2 -1
-  
+
   # Loop over the df_dv columns (= parcels)
   for (i in seq_along(df_dv)) {
     
-    # Fit a linear model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV
-    lm_fit = lm(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs)
+    family_id = df_iv$Family_ID
     
-    # Extract from summary of lm_fit the t- and p-values
-    # summary(lm_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
-    t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
-    p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
+    # Fit a linear mixed effects model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV + controlling for family relatedness 
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id), REML = FALSE)  
+    #ProcSpeed_raw ~ age_months + sex_female + (1 | Pair) + (1 | M), REML = FALSE, data = ses01)
+    
+    # controling for twin pairs
+    #lmer_fit <- lmer(ProcSpeed_raw ~ age_months + sex_female + (1 | Pair) + (1 | M), REML = FALSE, data = ses01)
+    
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val_sex[[i]] = summary(lmer_fit)$coefficients[2,4]
+    p_val_sex[[i]] = summary(lmer_fit)$coefficients[2,5]
+    beta_val_sex[[i]] = summary(lmer_fit)$coefficients[2,1]
     
   }
   
@@ -159,10 +173,16 @@ lm.sex_age <- function(df_dv, df_iv) {
   q_val_sex = p.adjust(p_val_sex, method = "fdr")
   
   # Create output dataframe containing t-values, p-values, and q-values
-  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex)
+  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex, beta_val_sex)
   
   return(output_df)
 }
+
+
+
+
+
+
 
 
 
@@ -290,10 +310,61 @@ lm_G2_sex_age_icv_res = lm.sex_age_icv(df_dv = array_aligned_G2, df_iv = merged_
 lm_G3_sex_age_icv_res = lm.sex_age_icv(df_dv = array_aligned_G3, df_iv = merged_demographics_cleaned)
 
 
+
+
+
+# -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
+
+##### effect size calculation: try https://stats.stackexchange.com/questions/71816/calculating-effect-size-for-variables-in-a-multiple-regression-in-r 
+
+# Fit a linear model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV
+lm_fit = lm(array_aligned_G1[[1]] ~ merged_demographics_cleaned$Gender + merged_demographics_cleaned$Age_in_Yrs + merged_demographics_cleaned$FS_IntraCranial_Vol)
+summary(lm_fit)
+
+
+
+
+
+# -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 # number of significant parcels
 sum(lm_G1_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
 sum(lm_G2_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  
 sum(lm_G3_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  
+
+
+
+
+
+### model = Gradient_Eigenvalues ~ Sex + Age + ICV + controlling for family relatedness
+
+# run model
+
+lm_G1_sex_age_icv_ctrl_related_res = lmer.sex_age_icv_ctrl_related(df_dv = array_aligned_G1, df_iv = merged_demographics_cleaned)
+lm_G2_sex_age_icv_ctrl_related_res = lmer.sex_age_icv_ctrl_related(df_dv = array_aligned_G2, df_iv = merged_demographics_cleaned)
+lm_G3_sex_age_icv_ctrl_related_res = lmer.sex_age_icv_ctrl_related(df_dv = array_aligned_G3, df_iv = merged_demographics_cleaned)
+
+# number of significant parcels
+sum(lm_G1_sex_age_icv_ctrl_related_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(lm_G2_sex_age_icv_ctrl_related_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(lm_G3_sex_age_icv_ctrl_related_res$q_val_sex < 0.05, na.rm=TRUE)  
+
+
+#test = lmer(array_aligned_G1[[1]] ~ merged_demographics_cleaned$Gender + merged_demographics_cleaned$Age_in_Yrs + merged_demographics_cleaned$FS_IntraCranial_Vol + (1 | merged_demographics_cleaned$Family_ID), REML = FALSE)  
+#lm(array_aligned_G1[[1]] ~ merged_demographics_cleaned$Gender + merged_demographics_cleaned$Age_in_Yrs + merged_demographics_cleaned$FS_IntraCranial_Vol)
+
+
 
 
 
@@ -311,14 +382,6 @@ sum(lm_G3_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)
 
 
 
-#'*STRANGE: quite different number of sig parcels between my R and Python code -> check with Giaco*
-#'*BUT: my  lm_G1_sex_age_res -> 209 corresponds to the number of sig parcels yielded by his q value calculation from my t values) -> suggests that at least the q value calculation is correct
-df_comparison_qvals = read.csv(paste(codedir, '/giaco/', 'comparison_qval_Giaco_Bianca_lmfull_sex_age_v3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-sum(df_comparison_qvals$Bianca_qval < 0.05, na.rm=TRUE)
-# ALSO SUGGESTS that t values are similar, but they are not exactly the same:
-df_comparison_qvals$Bianca_tval
-lm_G1_sex_age_res$t_val_sex
-df_comparison_qvals$Bianca_tval == lm_G1_sex_age_res$t_val_sex
 
 
 
@@ -339,18 +402,24 @@ sum(lm_G3_sex_age_icv_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)
 
 
 
-### model = Gradient_Eigenvalues ~ Sex + Age 
-
-# run model
-lm_G1_sex_age_res_unrel_1 = lm.sex_age(df_dv = array_aligned_G1_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
-lm_G2_sex_age_res_unrel_1 = lm.sex_age(df_dv = array_aligned_G2_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
-lm_G3_sex_age_res_unrel_1 = lm.sex_age(df_dv = array_aligned_G3_unrel_1, df_iv = merged_demographics_cleaned_unrel_1)
 
 
-# number of significant parcels
-sum(lm_G1_sex_age_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
-sum(lm_G2_sex_age_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  
-sum(lm_G3_sex_age_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# COMPARISON RELATED AND UNRELATED SAMPLES
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  
+# Spearman correlation of t-values
+cor.test(lm_G1_sex_age_icv_res$t_val_sex, lm_G1_sex_age_icv_res_unrel_1$t_val_sex, method="spearman")
+cor.test(lm_G2_sex_age_icv_res$t_val_sex, lm_G2_sex_age_icv_res_unrel_1$t_val_sex, method="spearman")
+cor.test(lm_G3_sex_age_icv_res$t_val_sex, lm_G3_sex_age_icv_res_unrel_1$t_val_sex, method="spearman")
+
+# Spearman correlation of beta values
+    # more indicative than comparing t-values because betas should be similar (regardless of the sample size), whereas t will be different (in function of sample size) because there is a different SE
+    # in true null, SE will increase and will create a lot of “noise”
+    # if betas are very different, it is a red flag -> betas are indeed very different
+cor.test(lm_G1_sex_age_icv_res$beta_val_sex, lm_G1_sex_age_icv_res_unrel_1$beta_val_sex, method="spearman")
+cor.test(lm_G2_sex_age_icv_res$beta_val_sex, lm_G2_sex_age_icv_res_unrel_1$beta_val_sex, method="spearman")
+cor.test(lm_G3_sex_age_icv_res$beta_val_sex, lm_G3_sex_age_icv_res_unrel_1$beta_val_sex, method="spearman")
 
 
 
@@ -363,15 +432,17 @@ sum(lm_G3_sex_age_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)
 write.csv(lm_G1_sex_age_icv_res, paste(resdir, 'R_lm_G1_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
 write.csv(lm_G2_sex_age_icv_res, paste(resdir, 'R_lm_G2_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
 write.csv(lm_G3_sex_age_icv_res, paste(resdir, 'R_lm_G3_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G1_sex_age_res, paste(resdir, 'R_lm_G1_sex_age_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G2_sex_age_res, paste(resdir, 'R_lm_G2_sex_age_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G3_sex_age_res, paste(resdir, 'R_lm_G3_sex_age_res.csv', sep = ''), row.names = FALSE)
+
+
+###### Full Sample - model controlling for family relatedness
+
+write.csv(lm_G1_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G1_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G1_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G2_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G1_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G3_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
 
 
 ###### Unrelated Sample
 write.csv(lm_G1_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G1_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
 write.csv(lm_G2_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G2_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
 write.csv(lm_G3_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G3_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G1_sex_age_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G1_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G2_sex_age_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G2_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G3_sex_age_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G3_sex_age_res_unrel_1.csv', sep = ''), row.names = FALSE)
+
