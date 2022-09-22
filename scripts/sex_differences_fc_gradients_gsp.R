@@ -102,7 +102,7 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
   p_val_sex = vector(mode = "double", length = ncol(df_dv))
   
   # Degrees of Freedom = N (subjects) - number of IV (3 *** HARD-CODED FOR THIS SPECIFIC LM MODEL ***) - 1 (mean)
-  DoF = nrow(df_dv) - 3 -1
+  #DoF = nrow(df_dv) - 3 -1
   
   # Loop over the df_dv columns (= parcels)
   for (i in seq_along(df_dv)) {
@@ -113,7 +113,7 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
     # Extract from summary of lm_fit the t- and p-values
     # summary(lm_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
     t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
-    p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
+    p_val_sex[[i]] = summary(lm_fit)$coefficients[2,4]  # if want to calculate p value by hand: p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)
     
   }
   
@@ -127,42 +127,6 @@ lm.sex_age_icv <- function(df_dv, df_iv) {
 }
 
 
-lm.sex_age <- function(df_dv, df_iv) {
-  
-  '
-    - fits and runs linear model to test for SEX effects, including sex, age and ICV in the model as covariates
-    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
-    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
-  '
-  
-  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
-  t_val_sex = vector(mode = "double", length = ncol(df_dv))  
-  p_val_sex = vector(mode = "double", length = ncol(df_dv))
-  
-  # Degrees of Freedom = N (subjects) - number of IV (2 *** HARD-CODED FOR THIS SPECIFIC LM MODEL ***) - 1 (mean)
-  DoF = nrow(df_dv) - 2 -1
-  
-  # Loop over the df_dv columns (= parcels)
-  for (i in seq_along(df_dv)) {
-    
-    # Fit a linear model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV
-    lm_fit = lm(df_dv[[i]] ~ df_iv$Sex + df_iv$Age_Bin)
-    
-    # Extract from summary of lm_fit the t- and p-values
-    # summary(lm_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
-    t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
-    p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)  # calculating p value by hand but could directly obtain it from summary(lm_fit)$coefficients[2,4]
-    
-  }
-  
-  # Calculate FDR-corrected q-values from p-values
-  q_val_sex = p.adjust(p_val_sex, method = "fdr")
-  
-  # Create output dataframe containing t-values, p-values, and q-values
-  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex)
-  
-  return(output_df)
-}
 
 
 
@@ -243,18 +207,6 @@ sum(lm_G3_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)
 
 
 
-### model = Gradient_Eigenvalues ~ Sex + Age 
-
-# run model
-lm_G1_sex_age_res = lm.sex_age(df_dv = array_aligned_G1, df_iv = demographics_cleaned)
-lm_G2_sex_age_res = lm.sex_age(df_dv = array_aligned_G2, df_iv = demographics_cleaned)
-lm_G3_sex_age_res = lm.sex_age(df_dv = array_aligned_G3, df_iv = demographics_cleaned)
-
-# number of significant parcels
-sum(lm_G1_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
-sum(lm_G2_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  
-sum(lm_G3_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  
-
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -264,10 +216,6 @@ sum(lm_G3_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)
 write.csv(lm_G1_sex_age_icv_res, paste(resdir, 'R_lm_G1_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
 write.csv(lm_G2_sex_age_icv_res, paste(resdir, 'R_lm_G2_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
 write.csv(lm_G3_sex_age_icv_res, paste(resdir, 'R_lm_G3_sex_age_icv_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G1_sex_age_res, paste(resdir, 'R_lm_G1_sex_age_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G2_sex_age_res, paste(resdir, 'R_lm_G2_sex_age_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G3_sex_age_res, paste(resdir, 'R_lm_G3_sex_age_res.csv', sep = ''), row.names = FALSE)
-
 
 
 
