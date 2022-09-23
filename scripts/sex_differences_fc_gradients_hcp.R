@@ -183,9 +183,6 @@ lmer.sex_age_icv_ctrl_related <- function(df_dv, df_iv) {
 
 
 
-
-
-
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # PREPARE DATA 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -319,9 +316,111 @@ lm_G3_sex_age_icv_res = lm.sex_age_icv(df_dv = array_aligned_G3, df_iv = merged_
 
 ##### effect size calculation: try https://stats.stackexchange.com/questions/71816/calculating-effect-size-for-variables-in-a-multiple-regression-in-r 
 
+
+# to test on 1 value:
+
 # Fit a linear model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV
 lm_fit = lm(array_aligned_G1[[1]] ~ merged_demographics_cleaned$Gender + merged_demographics_cleaned$Age_in_Yrs + merged_demographics_cleaned$FS_IntraCranial_Vol)
 summary(lm_fit)
+
+
+
+# function with integrated output of semi parcellation squared (error y must be numeric)
+
+lm.sex_age_icv_TEST <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model to test for SEX effects, including sex, age and ICV in the model as covariates
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val_sex = vector(mode = "double", length = ncol(df_dv))  
+  p_val_sex = vector(mode = "double", length = ncol(df_dv))
+  beta_val_sex = vector(mode = "double", length = ncol(df_dv))
+  
+  sp_sq_sex = vector(mode = "double", length = ncol(df_dv))
+  
+  # Degrees of Freedom = N (subjects) - number of IV (3 *** HARD-CODED FOR THIS SPECIFIC LM MODEL ***) - 1 (mean)
+  #DoF = nrow(df_dv) - 3 -1
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    # Fit a linear model: lm = Gradient_Eigenvalues ~ Sex + Age + ICV
+    lm_fit = lm(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol)
+    
+    # Extract from summary of lm_fit the t- and p-values
+    # summary(lm_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 t-value, 4 p-value
+    t_val_sex[[i]] = summary(lm_fit)$coefficients[2,3]
+    p_val_sex[[i]] = summary(lm_fit)$coefficients[2,4]  # if want to calculate p value by hand: p_val_sex[[i]] = 2*pt(abs(t_val_sex[[i]]), DoF, lower.tail = F)
+    beta_val_sex[[i]] = summary(lm_fit)$coefficients[2,1]
+    
+    sp_sq_sex[[i]] = (semi.r(y = df_dv[[i]], x = df_iv$Gender, given = df_iv$Age_in_Yrs))^2
+ 
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val_sex = p.adjust(p_val_sex, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex, beta_val_sex, sp_sq_sex)
+  
+  return(output_df)
+}
+
+
+
+
+
+# Effect size measure: semi-partial correlation squared (gives you the proportion of variance in y accounted for by x1 having controlled for x2) 
+
+# function to compute the semi-partial r (see explanation at https://stats.stackexchange.com/questions/71816/calculating-effect-size-for-variables-in-a-multiple-regression-in-r)
+semi.r = function(y, x, given){  
+  ryx  = cor(y, x)
+  ryg  = cor(y, given)
+  rxg  = cor(x, given)
+  num  = ryx - (ryg*rxg)
+  dnm  = sqrt( (1-rxg^2) )
+  sp.r = num/dnm
+  return(sp.r)
+}
+
+
+
+# demonstration -> works
+
+set.seed(9503)                   # this makes the example exactly reproducible
+x1 = rnorm(10)                   # these variables are uncorrelated in the population
+x2 = rnorm(10)                   # but not perfectly uncorrelated in this sample:
+cor(x1, x2)                      # [1]  0.1265472
+y  = 4 + .5*x1 - .3*x2 + rnorm(10, mean=0, sd=1)
+model = lm(y~x1+x2)
+summary(model)
+# ...
+# Coefficients:
+#             Estimate Std. Error t value Pr(>|t|)    
+# (Intercept)   4.1363     0.4127  10.022 2.11e-05 ***
+# x1            0.1754     0.3800   0.461    0.658    
+# x2           -0.6181     0.3604  -1.715    0.130    
+# ...
+sp.x1 = semi.r(y=y, x=x1, given=x2);  sp.x1  # [1]  0.1459061
+sp.x1^2                                      # [1]  0.02128858
+c.x2 = cor(x2, y);  c.x2                     # [1] -0.5280958
+c.x2^2                                       # [1]  0.2788852
+c.x2^2 + sp.x1^2                             # [1]  0.3001738
+summary(model)$r.squared                     # [1]  0.3001738
+
+
+
+# trial on my array G1 -> error y must be numeric
+
+sp.sex = semi.r(y = array_aligned_G1[[1]], x = merged_demographics_cleaned$Gender, given = merged_demographics_cleaned$Age_in_Yrs)
+class(array_aligned_G1[[1]])
+
+lm.sex_age_icv_TEST(df_dv = array_aligned_G1, df_iv = merged_demographics_cleaned)
+
 
 
 
