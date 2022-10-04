@@ -203,6 +203,7 @@ length(array_aligned_G1$X1)
 merged_demographics_cleaned = read.csv(paste(resdir, 'merged_demographics_cleaned.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
+
 ###### Unrelated Sample
 
 # Aligned gradient values (unrelated sample)
@@ -212,6 +213,19 @@ array_aligned_G3_unrel_1 = read.csv(paste(resdir, 'unrelated_sample/array_aligne
 
 # Descriptives
 merged_demographics_cleaned_unrel_1 = read.csv(paste(resdir, 'unrelated_sample/merged_demographics_cleaned_unrel_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+
+
+###### Random n = 430 Sample
+
+# Aligned gradient values (unrelated sample)
+array_aligned_G1_rand430 = read.csv(paste(resdir, 'random_430/array_aligned_G1_rand430.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+array_aligned_G2_rand430 = read.csv(paste(resdir, 'random_430/array_aligned_G2_rand430.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+array_aligned_G3_rand430 = read.csv(paste(resdir, 'random_430/array_aligned_G3_rand430.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+# Descriptives
+merged_demographics_cleaned_rand430 = read.csv(paste(resdir, 'random_430/demographics_cleaned_rand430.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
 
 
 
@@ -433,10 +447,6 @@ lm.sex_age_icv_TEST(df_dv = array_aligned_G1, df_iv = merged_demographics_cleane
 
 
 
-
-
-
-
 # number of significant parcels
 sum(lm_G1_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
 sum(lm_G2_sex_age_icv_res$q_val_sex < 0.05, na.rm=TRUE)  
@@ -467,22 +477,6 @@ sum(lm_G3_sex_age_icv_ctrl_related_res$q_val_sex < 0.05, na.rm=TRUE)
 
 
 
-### model = Gradient_Eigenvalues ~ Sex + Age 
-
-# run model
-lm_G1_sex_age_res = lm.sex_age(df_dv = array_aligned_G1, df_iv = merged_demographics_cleaned)
-lm_G2_sex_age_res = lm.sex_age(df_dv = array_aligned_G2, df_iv = merged_demographics_cleaned)
-lm_G3_sex_age_res = lm.sex_age(df_dv = array_aligned_G3, df_iv = merged_demographics_cleaned)
-
-# number of significant parcels
-sum(lm_G1_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
-sum(lm_G2_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  
-sum(lm_G3_sex_age_res$q_val_sex < 0.05, na.rm=TRUE)  
-
-
-
-
-
 
 ###### Unrelated Sample
 
@@ -500,6 +494,21 @@ sum(lm_G2_sex_age_icv_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)
 sum(lm_G3_sex_age_icv_res_unrel_1$q_val_sex < 0.05, na.rm=TRUE)  
 
 
+
+###### Random n=430 Sample
+
+### model = Gradient_Eigenvalues ~ Sex + Age + ICV 
+
+# run model
+lm_G1_sex_age_icv_res_rand430 = lm.sex_age_icv(df_dv = array_aligned_G1_rand430, df_iv = merged_demographics_cleaned_rand430)
+lm_G2_sex_age_icv_res_rand430 = lm.sex_age_icv(df_dv = array_aligned_G2_rand430, df_iv = merged_demographics_cleaned_rand430)
+lm_G3_sex_age_icv_res_rand430 = lm.sex_age_icv(df_dv = array_aligned_G3_rand430, df_iv = merged_demographics_cleaned_rand430)
+
+
+# number of significant parcels
+sum(lm_G1_sex_age_icv_res_rand430$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(lm_G2_sex_age_icv_res_rand430$q_val_sex < 0.05, na.rm=TRUE)  
+sum(lm_G3_sex_age_icv_res_rand430$q_val_sex < 0.05, na.rm=TRUE)  
 
 
 
@@ -536,8 +545,8 @@ write.csv(lm_G3_sex_age_icv_res, paste(resdir, 'R_lm_G3_sex_age_icv_res.csv', se
 ###### Full Sample - model controlling for family relatedness
 
 write.csv(lm_G1_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G1_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G1_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G2_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
-write.csv(lm_G1_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G3_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G2_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_icv_ctrl_related_res, paste(resdir, 'full_sample_ctrl_related/R_lm_G3_sex_age_icv_ctrl_related_res.csv', sep = ''), row.names = FALSE)
 
 
 ###### Unrelated Sample
@@ -545,3 +554,8 @@ write.csv(lm_G1_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G1
 write.csv(lm_G2_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G2_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
 write.csv(lm_G3_sex_age_icv_res_unrel_1, paste(resdir, 'unrelated_sample/R_lm_G3_sex_age_icv_res_unrel_1.csv', sep = ''), row.names = FALSE)
 
+
+###### Random n=430 Sample
+write.csv(lm_G1_sex_age_icv_res_rand430, paste(resdir, 'random_430/R_lm_G1_sex_age_icv_res_rand430.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G2_sex_age_icv_res_rand430, paste(resdir, 'random_430/R_lm_G2_sex_age_icv_res_rand430.csv', sep = ''), row.names = FALSE)
+write.csv(lm_G3_sex_age_icv_res_rand430, paste(resdir, 'random_430/R_lm_G3_sex_age_icv_res_rand430.csv', sep = ''), row.names = FALSE)
