@@ -200,7 +200,7 @@ dim(array_aligned_G1)
 length(array_aligned_G1$X1)
 
 # Descriptives 
-merged_demographics_cleaned = read.csv(paste(resdir, 'merged_demographics_cleaned.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+merged_demographics_cleaned = read.csv(paste(resdir, 'demographics_cleaned.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
 
