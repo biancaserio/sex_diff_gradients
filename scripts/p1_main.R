@@ -114,6 +114,7 @@ lmer.hcp_sex_contrast <- function(df_dv, df_iv) {
     # https://stackoverflow.com/questions/71340764/interaction-between-two-factors-as-random-effects-in-mixed-model-in-r
     
     lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id) + (1 | family_id:twin_status), REML = FALSE)
+    #lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id) + (1 | twin_status) + (1 | family_id:twin_status), REML = FALSE)
     
     # Extract from summary of lmer_fit the t- and p-values
     # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
@@ -159,11 +160,10 @@ dim(HCP_array_aligned_G1)
 GSP_demographics_cleaned = read.csv(paste(resdir_gsp, 'demographics_cleaned.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 HCP_demographics_cleaned = read.csv(paste(resdir_hcp, 'demographics_cleaned.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
-str(HCP_demographics_cleaned,  list.len=ncol(HCP_demographics_cleaned))
 
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # LINEAR REGRESSIONS
-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 ### GSP: model = Gradient_Eigenvalues ~ Sex + Age + ICV 
 
@@ -193,6 +193,16 @@ sum(HCP_lmer_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)
 sum(HCP_lmer_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
 
 
+
+# tests below to delete!!!!
+family_id = HCP_demographics_cleaned$Family_ID
+twin_status = HCP_demographics_cleaned$TwinStatus
+
+test = lmer(HCP_array_aligned_G1[[1]] ~ HCP_demographics_cleaned$Gender + HCP_demographics_cleaned$Age_in_Yrs + HCP_demographics_cleaned$FS_IntraCranial_Vol + (1 | family_id) + (1 | family_id:twin_status), REML = FALSE)
+summary(test)$coefficients
+
+test = lmer(HCP_array_aligned_G1[[1]] ~ HCP_demographics_cleaned$Gender + HCP_demographics_cleaned$Age_in_Yrs + HCP_demographics_cleaned$FS_IntraCranial_Vol + (1 | family_id) + (1 | twin_status) + (1 | family_id:twin_status), REML = FALSE)
+summary(test)$coefficients
 
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
