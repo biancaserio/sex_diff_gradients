@@ -113,8 +113,11 @@ lmer.hcp_sex_contrast <- function(df_dv, df_iv) {
     # https://stats.stackexchange.com/questions/96600/interactions-between-random-effects
     # https://stackoverflow.com/questions/71340764/interaction-between-two-factors-as-random-effects-in-mixed-model-in-r
     
-    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id) + (1 | family_id:twin_status), REML = FALSE)
-    #lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id) + (1 | twin_status) + (1 | family_id:twin_status), REML = FALSE)
+    # Model including only one of the "single" random effects included in the interaction random effect (i.e., family ID, not including twin status because would group together unrelated subjects who are e.g., also twins) -> I think this would be the correct model to use
+    #lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id) + (1 | family_id:twin_status), REML = FALSE)
+    
+    # Model including both "single" random effects included in the interaction random effect (Sofie's decision)
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id) + (1 | twin_status) + (1 | family_id:twin_status), REML = FALSE)
     
     # Extract from summary of lmer_fit the t- and p-values
     # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
