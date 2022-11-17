@@ -140,12 +140,12 @@ lmer.hcp_fc_sex_contrast <- function(df_dv, df_iv) {
 
 
 
-### Linear Regression GSP Local CT
+### Linear Regression GSP CT (both local and gradient)
 
-lm.gsp_ct_local_sex_contrast <- function(df_dv, df_iv) {
+lm.gsp_ct_sex_contrast <- function(df_dv, df_iv) {
   
   '
-  - fits and runs linear model to test for SEX effects, including sex, age and global CT in the model as covariates (relevant to local CT)
+  - fits and runs linear model to test for SEX effects, including sex, age and global CT in the model as covariates (relevant to CT)
   - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
   - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
 '
@@ -179,12 +179,12 @@ lm.gsp_ct_local_sex_contrast <- function(df_dv, df_iv) {
 
 
 
-### Linear Regression HCP Local CT
+### Linear Regression HCP CT (both local and gradient)
 
-lmer.hcp_ct_local_sex_contrast <- function(df_dv, df_iv) {
+lmer.hcp_ct_sex_contrast <- function(df_dv, df_iv) {
   
   '
-    - fits and runs linear model to test for SEX effects, including sex, age and global CT, as well as random effects family id, twin status and family id * twin status, in the model as covariates (relevant to functional connectivity)
+    - fits and runs linear model to test for SEX effects, including sex, age and global CT, as well as random effects family id, twin status and family id * twin status, in the model as covariates (relevant to CT)
     - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
     - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
   '
@@ -237,14 +237,14 @@ lmer.hcp_ct_local_sex_contrast <- function(df_dv, df_iv) {
 # PREPARE DATA 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# Aligned functional gradient values 
-GSP_array_aligned_G1 = read.csv(paste(resdir_gsp, 'array_aligned_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-GSP_array_aligned_G2 = read.csv(paste(resdir_gsp, 'array_aligned_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-GSP_array_aligned_G3 = read.csv(paste(resdir_gsp, 'array_aligned_G3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+# Aligned functional gradient loadings 
+GSP_array_aligned_fc_G1 = read.csv(paste(resdir_gsp, 'array_aligned_fc_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+GSP_array_aligned_fc_G2 = read.csv(paste(resdir_gsp, 'array_aligned_fc_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+GSP_array_aligned_fc_G3 = read.csv(paste(resdir_gsp, 'array_aligned_fc_G3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
-HCP_array_aligned_G1 = read.csv(paste(resdir_hcp, 'array_aligned_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-HCP_array_aligned_G2 = read.csv(paste(resdir_hcp, 'array_aligned_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-HCP_array_aligned_G3 = read.csv(paste(resdir_hcp, 'array_aligned_G3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+HCP_array_aligned_fc_G1 = read.csv(paste(resdir_hcp, 'array_aligned_fc_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+HCP_array_aligned_fc_G2 = read.csv(paste(resdir_hcp, 'array_aligned_fc_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+HCP_array_aligned_fc_G3 = read.csv(paste(resdir_hcp, 'array_aligned_fc_G3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
 # Local CT data
@@ -252,11 +252,22 @@ GSP_ct_schaefer400 = read.csv(paste(resdir_gsp, 'ct_schaefer400.csv', sep = ''),
 HCP_ct_schaefer400 = read.csv(paste(resdir_hcp, 'ct_schaefer400.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
+# Aligned structural gradient loadings
+GSP_array_aligned_ct_G1 = read.csv(paste(resdir_gsp, 'array_aligned_ct_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+GSP_array_aligned_ct_G2 = read.csv(paste(resdir_gsp, 'array_aligned_ct_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+HCP_array_aligned_ct_G1 = read.csv(paste(resdir_hcp, 'array_aligned_ct_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+HCP_array_aligned_ct_G2 = read.csv(paste(resdir_hcp, 'array_aligned_ct_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
 
 # class(array_aligned_G1)
 # typeof(array_aligned_G1)
-dim(GSP_array_aligned_G1)
-dim(HCP_array_aligned_G1)
+dim(GSP_array_aligned_fc_G1)
+dim(HCP_array_aligned_fc_G1)
+
+dim(HCP_ct_schaefer400)
+
+dim(HCP_array_aligned_ct_G1)
 
 
 # Descriptives 
@@ -275,29 +286,29 @@ HCP_demographics_cleaned = read.csv(paste(resdir_hcp, 'demographics_cleaned.csv'
 ### GSP: model = Gradient_Eigenvalues ~ Sex + Age + ICV 
 
 # run model
-GSP_lm_G1_sex_contrast_res = lm.gsp_fc_sex_contrast(df_dv = GSP_array_aligned_G1, df_iv = GSP_demographics_cleaned)
-GSP_lm_G2_sex_contrast_res = lm.gsp_fc_sex_contrast(df_dv = GSP_array_aligned_G2, df_iv = GSP_demographics_cleaned)
-GSP_lm_G3_sex_contrast_res = lm.gsp_fc_sex_contrast(df_dv = GSP_array_aligned_G3, df_iv = GSP_demographics_cleaned)
+GSP_lm_fc_G1_sex_contrast_res = lm.gsp_fc_sex_contrast(df_dv = GSP_array_aligned_fc_G1, df_iv = GSP_demographics_cleaned)
+GSP_lm_fc_G2_sex_contrast_res = lm.gsp_fc_sex_contrast(df_dv = GSP_array_aligned_fc_G2, df_iv = GSP_demographics_cleaned)
+GSP_lm_fc_G3_sex_contrast_res = lm.gsp_fc_sex_contrast(df_dv = GSP_array_aligned_fc_G3, df_iv = GSP_demographics_cleaned)
 
 
 # number of significant parcels
-sum(GSP_lm_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(GSP_lm_G1_res$q_val_sex < 0.05))
-sum(GSP_lm_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
-sum(GSP_lm_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(GSP_lm_fc_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(GSP_lm_G1_res$q_val_sex < 0.05))
+sum(GSP_lm_fc_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(GSP_lm_fc_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
 
 
 
 ### HCP: model = Gradient_Eigenvalues ~ Sex + Age + ICV + random effect (family relatedness) + random effect (twin status) + random effect (family relatedness * twin status) 
 
 # run model
-HCP_lmer_G1_sex_contrast_res = lmer.hcp_fc_sex_contrast(df_dv = HCP_array_aligned_G1, df_iv = HCP_demographics_cleaned)
-HCP_lmer_G2_sex_contrast_res = lmer.hcp_fc_sex_contrast(df_dv = HCP_array_aligned_G2, df_iv = HCP_demographics_cleaned)
-HCP_lmer_G3_sex_contrast_res = lmer.hcp_fc_sex_contrast(df_dv = HCP_array_aligned_G3, df_iv = HCP_demographics_cleaned)
+HCP_lmer_fc_G1_sex_contrast_res = lmer.hcp_fc_sex_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned)
+HCP_lmer_fc_G2_sex_contrast_res = lmer.hcp_fc_sex_contrast(df_dv = HCP_array_aligned_fc_G2, df_iv = HCP_demographics_cleaned)
+HCP_lmer_fc_G3_sex_contrast_res = lmer.hcp_fc_sex_contrast(df_dv = HCP_array_aligned_fc_G3, df_iv = HCP_demographics_cleaned)
 
 # number of significant parcels
-sum(HCP_lmer_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
-sum(HCP_lmer_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
-sum(HCP_lmer_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(HCP_lmer_fc_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(HCP_lmer_fc_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(HCP_lmer_fc_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
 
 
 
@@ -317,46 +328,87 @@ summary(test)$coefficients
 
 ##### STRUCTURAL
 
-### GSP: model = Gradient_Eigenvalues ~ Sex + Age + Global CT 
+#### LOCAL
+
+### GSP: model = Local CT ~ Sex + Age + Global CT 
 
 # run model
-GSP_lm_ct_local_sex_contrast_res = lm.gsp_ct_local_sex_contrast(df_dv = GSP_ct_schaefer400, df_iv = GSP_demographics_cleaned)
+GSP_lm_ct_local_sex_contrast_res = lm.gsp_ct_sex_contrast(df_dv = GSP_ct_schaefer400, df_iv = GSP_demographics_cleaned)
 
 # number of significant parcels
 sum(GSP_lm_ct_local_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(GSP_lm_G1_res$q_val_sex < 0.05))
 
 
-### HCP: model = Gradient_Eigenvalues ~ Sex + Age + Global CT + random effect (family relatedness) + random effect (twin status) + random effect (family relatedness * twin status) 
+### HCP: model = Local CT ~ Sex + Age + Global CT + random effect (family relatedness) + random effect (twin status) + random effect (family relatedness * twin status) 
 
 # run model
-HCP_lmer_ct_local_sex_contrast_res = lmer.hcp_ct_local_sex_contrast(df_dv = HCP_ct_schaefer400, df_iv = HCP_demographics_cleaned)
+HCP_lmer_ct_local_sex_contrast_res = lmer.hcp_ct_sex_contrast(df_dv = HCP_ct_schaefer400, df_iv = HCP_demographics_cleaned)
 
 # number of significant parcels
 sum(HCP_lmer_ct_local_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(GSP_lm_G1_res$q_val_sex < 0.05))
 
 
-test = lm(GSP_ct_schaefer400[[1]] ~ GSP_demographics_cleaned$Sex + GSP_demographics_cleaned$Age_Bin + GSP_demographics_cleaned$global_ct)
-summary(test)$coefficients
+#### GRADIENTS
+
+
+### GSP: model = Gradient Loadings ~ Sex + Age + Global CT 
+
+# run model
+
+GSP_lm_ct_G1_sex_contrast_res = lm.gsp_ct_sex_contrast(df_dv = GSP_array_aligned_ct_G1, df_iv = GSP_demographics_cleaned)
+GSP_lm_ct_G2_sex_contrast_res = lm.gsp_ct_sex_contrast(df_dv = GSP_array_aligned_ct_G2, df_iv = GSP_demographics_cleaned)
+
+# number of significant parcels
+sum(GSP_lm_ct_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(GSP_lm_G1_res$q_val_sex < 0.05))
+sum(GSP_lm_ct_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)
+
+
+### HCP: model = Gradient Loadings ~ Sex + Age + Global CT + random effect (family relatedness) + random effect (twin status) + random effect (family relatedness * twin status) 
+
+# run model
+HCP_lmer_ct_G1_sex_contrast_res = lmer.hcp_ct_sex_contrast(df_dv = HCP_array_aligned_ct_G1, df_iv = HCP_demographics_cleaned)
+HCP_lmer_ct_G2_sex_contrast_res = lmer.hcp_ct_sex_contrast(df_dv = HCP_array_aligned_ct_G2, df_iv = HCP_demographics_cleaned)
+
+# number of significant parcels
+sum(HCP_lmer_ct_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(GSP_lm_G1_res$q_val_sex < 0.05))
+sum(HCP_lmer_ct_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE) 
+
+
+
+
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # EXPORT RESULTS 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# Functional
+### Functional (Gradients)
 
-write.csv(GSP_lm_G1_sex_contrast_res, paste(resdir_gsp, 'R_lm_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
-write.csv(GSP_lm_G2_sex_contrast_res, paste(resdir_gsp, 'R_lm_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
-write.csv(GSP_lm_G3_sex_contrast_res, paste(resdir_gsp, 'R_lm_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(GSP_lm_fc_G1_sex_contrast_res, paste(resdir_gsp, 'R_lm_fc_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(GSP_lm_fc_G2_sex_contrast_res, paste(resdir_gsp, 'R_lm_fc_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(GSP_lm_fc_G3_sex_contrast_res, paste(resdir_gsp, 'R_lm_fc_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
-write.csv(HCP_lmer_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
-write.csv(HCP_lmer_G2_sex_contrast_res, paste(resdir_hcp, 'R_lmer_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
-write.csv(HCP_lmer_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_fc_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_fc_G2_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_fc_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
-# Structural
+
+### Structural
+
+# Local
 
 write.csv(GSP_lm_ct_local_sex_contrast_res, paste(resdir_gsp, 'R_lm_ct_local_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_ct_local_sex_contrast_res, paste(resdir_hcp, 'R_lmer_ct_local_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
+
+# Gradients
+
+write.csv(GSP_lm_ct_G1_sex_contrast_res, paste(resdir_gsp, 'R_lm_ct_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(GSP_lm_ct_G2_sex_contrast_res, paste(resdir_gsp, 'R_lm_ct_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
+write.csv(HCP_lmer_ct_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_ct_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_ct_G2_sex_contrast_res, paste(resdir_hcp, 'R_lmer_ct_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
 
 
 
