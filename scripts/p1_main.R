@@ -111,13 +111,16 @@ HCP_array_aligned_mpc_G1 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G1.csv'
 HCP_array_aligned_mpc_G2 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 HCP_array_aligned_mpc_G3 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
-# Geodesic distances (mean of top 10% of distances)
+# Geodesic distances (mean of top 10% of functional connections)
+HCP_mean_geodesic_distances = read.csv(paste(resdir_hcp, 'mean_geodesic_distances.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
 # class(array_aligned_G1)
 # typeof(array_aligned_G1)
 dim(HCP_array_aligned_fc_G1)
 dim(HCP_array_aligned_mpc_G1)
+dim(HCP_mean_geodesic_distances)
+
 
 
 # Descriptives 
@@ -160,6 +163,16 @@ sum(HCP_lmer_mpc_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)
 
 
 
+### GEODESIC DISTANCE
+
+# run model
+HCP_lmer_geo_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_mean_geodesic_distances, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_geo_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+
+
+
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # EXPORT RESULTS 
@@ -178,6 +191,11 @@ write.csv(HCP_lmer_fc_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G3_sex_c
 write.csv(HCP_lmer_mpc_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mpc_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_mpc_G2_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mpc_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_mpc_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mpc_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
+
+### GEODESIC DISTANCE
+write.csv(HCP_lmer_geo_sex_contrast_res, paste(resdir_hcp, 'R_lmer_geo_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
 
 
 
