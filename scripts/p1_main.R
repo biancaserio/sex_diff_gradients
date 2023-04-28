@@ -48,20 +48,21 @@ setwd(codedir)
 # note: these functions are hardcoded for given datasets (variable names, variables included in the regression)
 
 
-### Linear Regression HCP Connectivity lm = Gradient_Eigenvalues ~ Sex + Age + ICV + random nested effect(family relatedness/twin status)
+### Linear Regression HCP Connectivity lmer = Gradient_Eigenvalues ~ Sex + Age + ICV + random nested effect(family relatedness/twin status) 
 
+# Sex contrast
 lmer.hcp_sex_contrast <- function(df_dv, df_iv) {
   
   '
-    - fits and runs linear model to test for SEX effects, including sex, age and ICV, as well as random effects family id, twin status and family id * twin status, in the model as covariates (relevant to functional connectivity)
+    - fits and runs linear model to test for SEX effects, including sex, age and ICV, as well as random nested effect(family relatedness/twin status in the model as covariates
     - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
     - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
   '
   
   # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
-  t_val_sex = vector(mode = "double", length = ncol(df_dv))  
-  p_val_sex = vector(mode = "double", length = ncol(df_dv))
-  beta_val_sex = vector(mode = "double", length = ncol(df_dv))
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
   
   
   # Loop over the df_dv columns (= parcels)
@@ -77,20 +78,164 @@ lmer.hcp_sex_contrast <- function(df_dv, df_iv) {
     
     # Extract from summary of lmer_fit the t- and p-values
     # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 Age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
-    t_val_sex[[i]] = summary(lmer_fit)$coefficients[2,4]
-    p_val_sex[[i]] = summary(lmer_fit)$coefficients[2,5]
-    beta_val_sex[[i]] = summary(lmer_fit)$coefficients[2,1]
+    t_val[[i]] = summary(lmer_fit)$coefficients[2,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[2,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[2,1]
     
   }
   
   # Calculate FDR-corrected q-values from p-values
-  q_val_sex = p.adjust(p_val_sex, method = "fdr")
+  q_val = p.adjust(p_val, method = "fdr")
   
   # Create output dataframe containing t-values, p-values, and q-values
-  output_df = data.frame(t_val_sex, p_val_sex, q_val_sex, beta_val_sex)
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
   
   return(output_df)
 }
+
+
+
+
+# ICV contrast
+lmer.hcp_icv_contrast <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model to test for ICV effects, including sex, age and ICV, as well as random nested effect(family relatedness/twin status in the model as covariates
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
+  
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    family_id = df_iv$Family_ID
+    twin_status = df_iv$TwinStatus
+    
+    # Fit a linear mixed effects model: DV ~ Sex + Age + ICV + random nested effect(family relatedness/twin status)
+    
+    # Model including both "single" random effects included in the interaction random effect (Sofie's decision)
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id/twin_status), REML = FALSE)
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 age, 4 ICV; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val[[i]] = summary(lmer_fit)$coefficients[4,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[4,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[4,1]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val = p.adjust(p_val, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
+  
+  return(output_df)
+}
+
+
+
+### Linear Regression HCP Connectivity lmer = Gradient_Eigenvalues ~ Sex + Age + ICV + geodesic distance + random nested effect(family relatedness/twin status) 
+
+# Geodesic distance contrast
+lmer.hcp_geo_contrast <- function(df_dv, df_iv, df_geo) {
+  
+  '
+    - fits and runs linear model to test for GEODESIC DISTANCE effects, including sex, age, geodesic distance and ICV, as well as random nested effect(family relatedness/twin status in the model as covariates
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables), df_geo (dataframe containing geodesic distance)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
+  
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    family_id = df_iv$Family_ID
+    twin_status = df_iv$TwinStatus
+    
+    # Fit a linear mixed effects model: DV ~ Sex + Age + ICV + random nested effect(family relatedness/twin status)
+    
+    # Model including both "single" random effects included in the interaction random effect (Sofie's decision)
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + df_geo[[i]] + (1 | family_id/twin_status), REML = FALSE)
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 age, 4 ICV, 5 geodesic distance; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val[[i]] = summary(lmer_fit)$coefficients[5,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[5,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[5,1]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val = p.adjust(p_val, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
+  
+  return(output_df)
+}
+
+
+
+
+
+### Linear Regression HCP Connectivity lmer = Gradient_Eigenvalues ~ Age + ICV + random nested effect(family relatedness/twin status)
+
+# ICV contrast 
+lmer.hcp_icv_contrast_within_sex <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model to test for ICV effects, including age and ICV, as well as random nested effect(family relatedness/twin status in the model as covariates
+    - not controlling for sex because running this within sex
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for ICV contrast
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
+  
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    family_id = df_iv$Family_ID
+    twin_status = df_iv$TwinStatus
+    
+    # Fit a linear mixed effects model: DV ~ Age + ICV + random nested effect(family relatedness/twin status)
+    
+    # Model including both "single" random effects included in the interaction random effect (Sofie's decision)
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + (1 | family_id/twin_status), REML = FALSE)
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 Age, 3 ICV; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val[[i]] = summary(lmer_fit)$coefficients[3,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[3,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[3,1]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val = p.adjust(p_val, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
+  
+  return(output_df)
+}
+
 
 
 
@@ -115,6 +260,7 @@ HCP_array_aligned_mpc_G3 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G3.csv'
 HCP_mean_geodesic_distances = read.csv(paste(resdir_hcp, 'mean_geodesic_distances.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
+
 # class(array_aligned_G1)
 # typeof(array_aligned_G1)
 dim(HCP_array_aligned_fc_G1)
@@ -127,6 +273,22 @@ dim(HCP_mean_geodesic_distances)
 HCP_demographics_cleaned_final = read.csv(paste(resdir_hcp, 'HCP_demographics_cleaned_final.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 dim(HCP_demographics_cleaned_final)
+
+
+
+### Make separate dataframes for different sexes to run within sex ICV analyses
+
+# FC G1
+HCP_array_aligned_fc_G1_M = read.csv(paste(resdir_hcp, 'array_aligned_fc_G1_M.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+HCP_array_aligned_fc_G1_F = read.csv(paste(resdir_hcp, 'array_aligned_fc_G1_F.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+# demographics
+HCP_demographics_cleaned_final_M = HCP_demographics_cleaned_final %>%
+  filter(Gender == "M")
+
+HCP_demographics_cleaned_final_F = HCP_demographics_cleaned_final %>%
+  filter(Gender == "F")
+
 
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -143,9 +305,9 @@ HCP_lmer_fc_G2_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligne
 HCP_lmer_fc_G3_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligned_fc_G3, df_iv = HCP_demographics_cleaned_final)
 
 # number of significant parcels
-sum(HCP_lmer_fc_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
-sum(HCP_lmer_fc_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
-sum(HCP_lmer_fc_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(HCP_lmer_fc_G1_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val < 0.05))
+sum(HCP_lmer_fc_G2_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
+sum(HCP_lmer_fc_G3_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
 
 
 
@@ -157,9 +319,9 @@ HCP_lmer_mpc_G2_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_align
 HCP_lmer_mpc_G3_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligned_mpc_G3, df_iv = HCP_demographics_cleaned_final)
 
 # number of significant parcels
-sum(HCP_lmer_mpc_G1_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
-sum(HCP_lmer_mpc_G2_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
-sum(HCP_lmer_mpc_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  
+sum(HCP_lmer_mpc_G1_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(HCP_lmer_mpc_G2_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
+sum(HCP_lmer_mpc_G3_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
 
 
 
@@ -169,7 +331,38 @@ sum(HCP_lmer_mpc_G3_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)
 HCP_lmer_geo_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_mean_geodesic_distances, df_iv = HCP_demographics_cleaned_final)
 
 # number of significant parcels
-sum(HCP_lmer_geo_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+sum(HCP_lmer_geo_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val_sex < 0.05))
+
+
+
+##### ICV effects in model = DV ~ Sex + Age + ICV + random nested effect(family relatedness/twin status)
+
+# run model
+HCP_lmer_fc_G1_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
+##### Geodesic distance effects in model = DV ~ Sex + Age + ICV + geodesic distance + random nested effect(family relatedness/twin status)
+
+# run model
+HCP_lmer_fc_G1_geo_contrast_res = lmer.hcp_geo_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final, df_geo = HCP_mean_geodesic_distances)
+
+# number of significant parcels
+sum(HCP_lmer_fc_G1_geo_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
+
+##### ICV effects within sexes in model = DV ~ Age + ICV + random nested effect(family relatedness/twin status)
+
+# run models
+HCP_lmer_fc_G1_icv_contrast_within_sex_M_res = lmer.hcp_icv_contrast_within_sex(df_dv = HCP_array_aligned_fc_G1_M, df_iv = HCP_demographics_cleaned_final_M)
+HCP_lmer_fc_G1_icv_contrast_within_sex_F_res = lmer.hcp_icv_contrast_within_sex(df_dv = HCP_array_aligned_fc_G1_F, df_iv = HCP_demographics_cleaned_final_F)
+
+# number of significant parcels
+sum(HCP_lmer_fc_G1_icv_contrast_within_sex_M_res$q_val < 0.05, na.rm=TRUE)  
+sum(HCP_lmer_fc_G1_icv_contrast_within_sex_F_res$q_val < 0.05, na.rm=TRUE) 
 
 
 
@@ -185,6 +378,11 @@ sum(HCP_lmer_geo_sex_contrast_res$q_val_sex < 0.05, na.rm=TRUE)  # other way: le
 write.csv(HCP_lmer_fc_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G2_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
+
+write.csv(HCP_lmer_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_fc_G1_geo_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_geo_contrast_res.csv', sep = ''), row.names = FALSE)
+
 
 
 ### STRUCTURAL -> MPC
