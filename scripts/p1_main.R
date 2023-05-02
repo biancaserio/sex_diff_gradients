@@ -384,7 +384,7 @@ write.csv(HCP_lmer_fc_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_sex_c
 write.csv(HCP_lmer_fc_G2_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
-write.csv(HCP_lmer_fc_G1_rescaled_sex_contrast_res, paste(resdir_hcp, 'HCP_lmer_fc_G1_rescaled_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_fc_G1_rescaled_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_rescaled_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 write.csv(HCP_lmer_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
