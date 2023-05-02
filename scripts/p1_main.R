@@ -251,6 +251,8 @@ HCP_array_aligned_fc_G1 = read.csv(paste(resdir_hcp, 'array_aligned_fc_G1.csv', 
 HCP_array_aligned_fc_G2 = read.csv(paste(resdir_hcp, 'array_aligned_fc_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 HCP_array_aligned_fc_G3 = read.csv(paste(resdir_hcp, 'array_aligned_fc_G3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
+HCP_array_aligned_fc_G1_rescaled = read.csv(paste(resdir_hcp, 'array_aligned_fc_G1_rescaled.csv', sep = ''), fileEncoding = 'UTF-8-BOM')  # rescaled between 0-1
+
 # Aligned MPC gradient loadings
 HCP_array_aligned_mpc_G1 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 HCP_array_aligned_mpc_G2 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
@@ -304,11 +306,14 @@ HCP_lmer_fc_G1_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligne
 HCP_lmer_fc_G2_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligned_fc_G2, df_iv = HCP_demographics_cleaned_final)
 HCP_lmer_fc_G3_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligned_fc_G3, df_iv = HCP_demographics_cleaned_final)
 
+HCP_lmer_fc_G1_rescaled_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligned_fc_G1_rescaled, df_iv = HCP_demographics_cleaned_final)
+
 # number of significant parcels
 sum(HCP_lmer_fc_G1_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val < 0.05))
 sum(HCP_lmer_fc_G2_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
 sum(HCP_lmer_fc_G3_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
 
+sum(HCP_lmer_fc_G1_rescaled_sex_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 ### STRUCTURAL -> MPC
@@ -378,6 +383,8 @@ sum(HCP_lmer_fc_G1_icv_contrast_within_sex_F_res$q_val < 0.05, na.rm=TRUE)
 write.csv(HCP_lmer_fc_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G2_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
+write.csv(HCP_lmer_fc_G1_rescaled_sex_contrast_res, paste(resdir_hcp, 'HCP_lmer_fc_G1_rescaled_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 write.csv(HCP_lmer_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
