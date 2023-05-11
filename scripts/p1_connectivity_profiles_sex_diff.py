@@ -175,10 +175,7 @@ for i in range(len(binary_top_fc.T)):
                     
                     # recompute OR
                     OR = (Cm/NCm)/0.5
-            
-            # append OR to row
-            temp_row_OR_matrix.append(OR)
-            
+                        
             
             # only run Chi-square test if there aren't just zeros in both columns (ie either male or female has area as one of top connections (totC > 0) or not all males and all females have area chosen as top connection (totNC > 0) - otherwise throws an error
             if (Cm + Cf > 0) and (NCm + NCf > 0):
@@ -191,6 +188,15 @@ for i in range(len(binary_top_fc.T)):
             else:
                 # append value of 1 to matrix row because both males and females have a value of 0 for this cell in matrix therefore p > 0.05 anyway (no difference) 
                 temp_row_chisquare_pval_matrix.append(1)
+                
+                # make OR = 1 (because it will have been computed as nan by the formula, but for later analyses it makes more sens that OR = 1 (meaning no difference)
+                OR = 1
+                
+      
+            # append OR to row
+            temp_row_OR_matrix.append(OR)
+            
+            
         
         else:
             # append value of 1 to matrix of p val row because we're at the intersection of the parcel's connection with itself in the matrix
