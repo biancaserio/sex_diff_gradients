@@ -253,6 +253,9 @@ HCP_array_aligned_fc_G3 = read.csv(paste(resdir_hcp, 'array_aligned_fc_G3.csv', 
 
 HCP_array_aligned_fc_G1_rescaled = read.csv(paste(resdir_hcp, 'array_aligned_fc_G1_rescaled.csv', sep = ''), fileEncoding = 'UTF-8-BOM')  # rescaled between 0-1
 
+HCP_hemi_array_aligned_fc_G1 = read.csv(paste(resdir_hcp, 'hemi_array_aligned_fc_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+
 # Aligned MPC gradient loadings
 HCP_array_aligned_mpc_G1 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 HCP_array_aligned_mpc_G2 = read.csv(paste(resdir_hcp, 'array_aligned_mpc_G2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
@@ -266,6 +269,7 @@ HCP_mean_geodesic_distances = read.csv(paste(resdir_hcp, 'mean_geodesic_distance
 # class(array_aligned_G1)
 # typeof(array_aligned_G1)
 dim(HCP_array_aligned_fc_G1)
+dim(HCP_hemi_array_aligned_fc_G1)
 dim(HCP_array_aligned_mpc_G1)
 dim(HCP_mean_geodesic_distances)
 
@@ -308,12 +312,16 @@ HCP_lmer_fc_G3_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligne
 
 HCP_lmer_fc_G1_rescaled_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_array_aligned_fc_G1_rescaled, df_iv = HCP_demographics_cleaned_final)
 
+HCP_lmer_hemi_fc_G1_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+
 # number of significant parcels
 sum(HCP_lmer_fc_G1_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  # other way: length(which(G1_lm_res$q_val < 0.05))
 sum(HCP_lmer_fc_G2_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
 sum(HCP_lmer_fc_G3_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
 
 sum(HCP_lmer_fc_G1_rescaled_sex_contrast_res$q_val < 0.05, na.rm=TRUE)
+
+sum(HCP_lmer_hemi_fc_G1_sex_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 ### STRUCTURAL -> MPC
@@ -344,19 +352,23 @@ sum(HCP_lmer_geo_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  # other way: length
 
 # run model
 HCP_lmer_fc_G1_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+HCP_lmer_hemi_fc_G1_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
 
 # number of significant parcels
 sum(HCP_lmer_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
+sum(HCP_lmer_hemi_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
 ##### Geodesic distance effects in model = DV ~ Sex + Age + ICV + geodesic distance + random nested effect(family relatedness/twin status)
 
 # run model
 HCP_lmer_fc_G1_geo_contrast_res = lmer.hcp_geo_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final, df_geo = HCP_mean_geodesic_distances)
+HCP_lmer_hemi_fc_G1_geo_contrast_res = lmer.hcp_geo_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final, df_geo = HCP_mean_geodesic_distances)
+
 
 # number of significant parcels
 sum(HCP_lmer_fc_G1_geo_contrast_res$q_val < 0.05, na.rm=TRUE) 
-
+sum(HCP_lmer_hemi_fc_G1_geo_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
 ##### ICV effects within sexes in model = DV ~ Age + ICV + random nested effect(family relatedness/twin status)
@@ -386,10 +398,14 @@ write.csv(HCP_lmer_fc_G3_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G3_sex_c
 
 write.csv(HCP_lmer_fc_G1_rescaled_sex_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_rescaled_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
+write.csv(HCP_lmer_hemi_fc_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
 
 write.csv(HCP_lmer_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G1_geo_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_geo_contrast_res.csv', sep = ''), row.names = FALSE)
 
+write.csv(HCP_lmer_hemi_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_hemi_fc_G1_geo_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_geo_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 ### STRUCTURAL -> MPC
