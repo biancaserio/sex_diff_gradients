@@ -317,7 +317,6 @@ HCP_recomp_sub_mean_geodesic_distances_most_frequent_connections_bysexprofile = 
 HCP_mean_fc_strengths_top10 = read.csv(paste(resdir_hcp, 'mean_fc_strengths_top10.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
-
 # class(array_aligned_G1)
 # typeof(array_aligned_G1)
 dim(HCP_array_aligned_fc_G1)
@@ -412,6 +411,13 @@ sum(HCP_lmer_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE)
 sum(HCP_lmer_hemi_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
+# run model effects of ICV on mean geodesic distance of top10% connections computed at the individual level
+HCP_lmer_geo_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_mean_geodesic_distances, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_geo_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
 ##### Geodesic distance effects in model = DV ~ Sex + Age + ICV + geodesic distance + random nested effect(family relatedness/twin status)
 
 # run model
@@ -491,6 +497,9 @@ write.csv(HCP_lmer_hemi_fc_G1_sex_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_f
 
 write.csv(HCP_lmer_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_hemi_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
+
+write.csv(HCP_lmer_geo_icv_contrast_res, paste(resdir_hcp, 'R_lmer_geo_icv_contrast_res.csv', sep = ''), row.names = FALSE)
+
 
 write.csv(HCP_lmer_fc_G1_geo_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_geo_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_hemi_fc_G1_geo_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_geo_contrast_res.csv', sep = ''), row.names = FALSE)
