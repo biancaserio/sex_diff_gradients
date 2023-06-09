@@ -6,7 +6,7 @@
 
 # Main script
 
-# Content: Linear Model analyses for sex contrast in gradient eigenvalues in GSP, Linear Mixed Effects Model for sex contrast in gradient eigenvalues controlling for family relatedness and twin status
+# Content: Linear Mixed Effects Model for sex contrast in gradient eigenvalues controlling for sex, age, *ICV*, nested random effect of family relatedness and twin status
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -313,7 +313,7 @@ HCP_mean_geodesic_distances = read.csv(paste(resdir_hcp, 'mean_geodesic_distance
 # Mean geodesic distances of mean connectivity profiles by sex (ie each subject has the mean (by seed region) of the geodesic distance of the most frequent top 10% connections for their sex)
 HCP_recomp_sub_mean_geodesic_distances_most_frequent_connections_bysexprofile = read.csv(paste(resdir_hcp, 'recomp_sub_mean_geodesic_distances_most_frequent_connections_bysexprofile.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
-# mean fc strength by seed for top 10% connections computed at the individual level
+# Mean fc strength by seed for top 10% connections computed at the individual level
 HCP_mean_fc_strengths_top10 = read.csv(paste(resdir_hcp, 'mean_fc_strengths_top10.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
@@ -327,10 +327,10 @@ dim(HCP_mean_geodesic_distances)
 
 
 # Descriptives 
-HCP_demographics_cleaned_final = read.csv(paste(resdir_hcp, 'HCP_demographics_cleaned_final.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+HCP_demographics_cleaned_final = read.csv(paste(resdir_hcp, 'demographics_cleaned_final.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 dim(HCP_demographics_cleaned_final)
-
+str(HCP_demographics_cleaned_final)
 
 
 ### Make separate dataframes for different sexes to run within sex ICV analyses
@@ -478,6 +478,7 @@ sum(HCP_lmer_mean_fc_strengths_top10_sex_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 
+
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # EXPORT RESULTS 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -519,11 +520,13 @@ write.csv(HCP_lmer_geo_sex_contrast_res, paste(resdir_hcp, 'R_lmer_geo_sex_contr
 
 
 
-### sex effects for mean geodesic distance by seed region of top 10% connections (appearing most frequently by sex)
+##### sex effects for mean geodesic distance by seed region of top 10% connections (appearing most frequently by sex)
 write.csv(HCP_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 ##### sex effects for mean fc strength by seed for top 10% connections computed at the individual level
 write.csv(HCP_lmer_mean_fc_strengths_top10_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mean_fc_strengths_top10_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
+
 
 
 ############################################################################################################################################################################################################

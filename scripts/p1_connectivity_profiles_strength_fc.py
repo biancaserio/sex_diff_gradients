@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 
 
+# did not end up using this output - did this by mistake (computing top fc strengths at group level (i.e. for most frequent connections across all subjects, M and F) instead of top fc strengths at individual level (i.e. each subject's own top10 connections)
+
+
 ########################################
 ### Load packages
 ########################################
