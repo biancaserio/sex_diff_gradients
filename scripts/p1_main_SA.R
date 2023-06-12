@@ -286,26 +286,59 @@ lmer.hcp_local_SA_contrast <- function(df_dv, df_iv, df_local_SA) {
 
 
 
+# brain volume contrast in lmer = Gradient_Eigenvalues ~ Sex + Age + B_brain_vol + random nested effect(family relatedness/twin status) 
+
+
+lmer.hcp_brainvol_contrast <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model to test for brain volume effects, including sex, age and brain volume, as well as random nested effect(family relatedness/twin status in the model as covariates
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for BRAIN VOLUME contrast
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
+  
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    family_id = df_iv$Family_ID
+    twin_status = df_iv$TwinStatus
+    
+    # Fit a linear mixed effects model: DV ~ Sex + Age + tot_SA + random nested effect(family relatedness/twin status)
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$B_brain_vol + (1 | family_id/twin_status), REML = FALSE)
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 age, 4 B_brain_vol; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val[[i]] = summary(lmer_fit)$coefficients[4,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[4,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[4,1]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val = p.adjust(p_val, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
+  
+  return(output_df)
+}
 
 
 
 
-
-
-
-
-
-
-
-
-
-# ICV contrast
-#lmer.hcp_icv_contrast <- function(df_dv, df_iv) {
+# ICV contrast in lmer = Gradient_Eigenvalues ~ Sex + Age + ICV + random nested effect(family relatedness/twin status) 
+lmer.hcp_icv_contrast <- function(df_dv, df_iv) {
   
   '
     - fits and runs linear model to test for ICV effects, including sex, age and ICV, as well as random nested effect(family relatedness/twin status in the model as covariates
     - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
-    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX contrast
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for ICV contrast
   '
   
   # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
@@ -486,7 +519,7 @@ sum(HCP_lmer_hemi_fc_G1_geo_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 
-##### Total SA contrast in model = DV ~ Sex + Age + tot_SA + geodesic distance + random nested effect(family relatedness/twin status)
+##### Total SA contrast in model = DV ~ Sex + Age + tot_SA + random nested effect(family relatedness/twin status)
 
 # run model
 HCP_lmer_hemi_fc_G1_totSA_contrast_res = lmer.hcp_totSA_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
@@ -531,6 +564,30 @@ sum(HCP_lmer_fc_G1_local_SA_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 
+##### Brain volume contrast in model = DV ~ Sex + Age + B_brain_vol + random nested effect(family relatedness/twin status)
+
+# run model
+HCP_lmer_hemi_fc_G1_brainvol_contrast_res = lmer.hcp_brainvol_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+HCP_lmer_fc_G1_brainvol_contrast_res = lmer.hcp_brainvol_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_hemi_fc_G1_brainvol_contrast_res$q_val < 0.05, na.rm=TRUE) 
+sum(HCP_lmer_fc_G1_brainvol_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
+
+
+##### ICV effects in model = DV ~ Sex + Age + ICV + random nested effect(family relatedness/twin status)
+
+# run model
+HCP_lmer_hemi_fc_G1_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+HCP_lmer_fc_G1_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_hemi_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
+sum(HCP_lmer_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
 
 
 
@@ -542,17 +599,6 @@ sum(HCP_lmer_fc_G1_local_SA_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 ############ not used, from p1_main.R -> might need at some point? ##############
-
-
-##### ICV effects in model = DV ~ Sex + Age + ICV + random nested effect(family relatedness/twin status)
-
-# run model
-HCP_lmer_fc_G1_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
-HCP_lmer_hemi_fc_G1_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
-
-# number of significant parcels
-sum(HCP_lmer_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
-sum(HCP_lmer_hemi_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
 # run model effects of ICV on mean geodesic distance of top10% connections computed at the individual level
@@ -614,7 +660,7 @@ write.csv(HCP_lmer_fc_G1_geo_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_geo_c
 write.csv(HCP_lmer_hemi_fc_G1_geo_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_geo_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
-# Total SA contrast in model = DV ~ Sex + Age + tot_SA + geodesic distance + random nested effect(family relatedness/twin status)
+# Total SA contrast in model = DV ~ Sex + Age + tot_SA + random nested effect(family relatedness/twin status)
 write.csv(HCP_lmer_hemi_fc_G1_totSA_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_totSA_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G1_totSA_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_totSA_contrast_res.csv', sep = ''), row.names = FALSE)
 
@@ -632,6 +678,14 @@ write.csv(HCP_lmer_hemi_fc_G1_local_SA_contrast_res, paste(resdir_hcp, 'R_lmer_h
 write.csv(HCP_lmer_fc_G1_local_SA_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_local_SA_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
+# Brain volume contrast in model = DV ~ Sex + Age + B_brain_vol + random nested effect(family relatedness/twin status)
+write.csv(HCP_lmer_hemi_fc_G1_brainvol_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_brainvol_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_fc_G1_brainvol_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_brainvol_contrast_res.csv', sep = ''), row.names = FALSE)
+
+
+# ICV contrast in model = DV ~ Sex + Age + ICV + random nested effect(family relatedness/twin status)
+write.csv(HCP_lmer_hemi_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_lmer_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 
@@ -645,8 +699,7 @@ write.csv(HCP_lmer_fc_G1_local_SA_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_
 
 
 
-write.csv(HCP_lmer_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
-write.csv(HCP_lmer_hemi_fc_G1_icv_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_icv_contrast_res.csv', sep = ''), row.names = FALSE)
+
 
 write.csv(HCP_lmer_geo_icv_contrast_res, paste(resdir_hcp, 'R_lmer_geo_icv_contrast_res.csv', sep = ''), row.names = FALSE)
 
