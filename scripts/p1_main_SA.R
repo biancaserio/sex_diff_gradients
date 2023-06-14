@@ -376,6 +376,9 @@ lmer.hcp_icv_contrast <- function(df_dv, df_iv) {
 
 
 
+
+#### interaction effects: sex * brain size
+
 # sex * total surface area interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + Sex*tot_SA + random nested effect(family relatedness/twin status) 
 
 lmer.hcp_sexbytotSA_contrast <- function(df_dv, df_iv) {
@@ -417,6 +420,96 @@ lmer.hcp_sexbytotSA_contrast <- function(df_dv, df_iv) {
   
   return(output_df)
 }
+
+
+
+
+# sex * total brain volume interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + TBV + Sex*TBV + random nested effect(family relatedness/twin status) 
+
+lmer.hcp_sexbyTBV_contrast <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model to test for interaction of sex*TBV effects, including sex, age and TBV, as well as random nested effect(family relatedness/twin status in the model as covariates
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX * TBV interaction effect
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
+  
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    family_id = df_iv$Family_ID
+    twin_status = df_iv$TwinStatus
+    
+    # Fit a linear mixed effects model: DV ~ Sex + Age + TBV + sex*TBV random nested effect(family relatedness/twin status)
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$B_brain_vol + df_iv$Gender*df_iv$B_brain_vol + (1 | family_id/twin_status), REML = FALSE)
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 age, 4 TBV, 5 sex*TBV; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val[[i]] = summary(lmer_fit)$coefficients[5,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[5,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[5,1]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val = p.adjust(p_val, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
+  
+  return(output_df)
+}
+
+
+
+# sex * intracranial volume interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + ICV + Sex*ICV + random nested effect(family relatedness/twin status) 
+
+lmer.hcp_sexbyICV_contrast <- function(df_dv, df_iv) {
+  
+  '
+    - fits and runs linear model to test for interaction of sex*ICV effects, including sex, age and ICV, as well as random nested effect(family relatedness/twin status in the model as covariates
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX * ICV interaction effect
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
+  
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    family_id = df_iv$Family_ID
+    twin_status = df_iv$TwinStatus
+    
+    # Fit a linear mixed effects model: DV ~ Sex + Age + ICV + sex*ICV random nested effect(family relatedness/twin status)
+    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$FS_IntraCranial_Vol + df_iv$Gender*df_iv$FS_IntraCranial_Vol + (1 | family_id/twin_status), REML = FALSE)
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 age, 4 FS_IntraCranial_Vol, 5 sex*FS_IntraCranial_Vol; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val[[i]] = summary(lmer_fit)$coefficients[5,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[5,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[5,1]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val = p.adjust(p_val, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
+  
+  return(output_df)
+}
+
 
 
 
@@ -636,7 +729,9 @@ sum(HCP_lmer_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 
-#####  sex * total surface area interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + Sex*tot_SA + random nested effect(family relatedness/twin status) 
+##### sex * brain volume interaction effects
+
+## sex * total surface area interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + Sex*tot_SA + random nested effect(family relatedness/twin status) 
 
 # run model
 HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_res = lmer.hcp_sexbytotSA_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
@@ -646,6 +741,27 @@ HCP_lmer_fc_G1_sexbytotSA_contrast_res = lmer.hcp_sexbytotSA_contrast(df_dv = HC
 sum(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_res$q_val < 0.05, na.rm=TRUE) 
 sum(HCP_lmer_fc_G1_sexbytotSA_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
+
+## sex * TBV interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + TBV + Sex*TBV + random nested effect(family relatedness/twin status) 
+
+# run model
+HCP_lmer_hemi_fc_G1_sexbyTBV_contrast_res = lmer.hcp_sexbyTBV_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+HCP_lmer_fc_G1_sexbyTBV_contrast_res = lmer.hcp_sexbyTBV_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_hemi_fc_G1_sexbyTBV_contrast_res$q_val < 0.05, na.rm=TRUE) 
+sum(HCP_lmer_hemi_fc_G1_sexbyTBV_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
+## sex * ICV interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + ICV + Sex*ICV + random nested effect(family relatedness/twin status) 
+
+# run model
+HCP_lmer_hemi_fc_G1_sexbyICV_contrast_res = lmer.hcp_sexbyICV_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+HCP_lmer_fc_G1_sexbyICV_contrast_res = lmer.hcp_sexbyICV_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_hemi_fc_G1_sexbyICV_contrast_res$q_val < 0.05, na.rm=TRUE) 
+sum(HCP_lmer_fc_G1_sexbyICV_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
 
