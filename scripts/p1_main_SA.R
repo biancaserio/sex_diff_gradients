@@ -611,6 +611,7 @@ lmer.hcp_sex_contrast_controling_all_morphometric <- function(df_dv, df_iv, df_M
 
 
 
+
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # PREPARE DATA 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -908,9 +909,27 @@ sum(HCP_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res$q_
 
 
 
+##### Sex differences in brain size and anthropometric data
+family_id = HCP_demographics_cleaned_final$Family_ID
+twin_status = HCP_demographics_cleaned_final$TwinStatus
 
+lmer_fit <- lmer(HCP_demographics_cleaned_final$FS_IntraCranial_Vol ~ HCP_demographics_cleaned_final$Gender + HCP_demographics_cleaned_final$Age_in_Yrs + (1 | family_id/twin_status), REML = FALSE)
+summary(lmer_fit)
 
+lmer_fit <- lmer(HCP_demographics_cleaned_final$B_brain_vol ~ HCP_demographics_cleaned_final$Gender + HCP_demographics_cleaned_final$Age_in_Yrs + (1 | family_id/twin_status), REML = FALSE)
+summary(lmer_fit)
 
+lmer_fit <- lmer(HCP_demographics_cleaned_final$tot_SA ~ HCP_demographics_cleaned_final$Gender + HCP_demographics_cleaned_final$Age_in_Yrs + (1 | family_id/twin_status), REML = FALSE)
+summary(lmer_fit)
+
+lmer_fit <- lmer(HCP_demographics_cleaned_final$Height ~ HCP_demographics_cleaned_final$Gender + HCP_demographics_cleaned_final$Age_in_Yrs + (1 | family_id/twin_status), REML = FALSE)
+summary(lmer_fit)
+
+lmer_fit <- lmer(HCP_demographics_cleaned_final$Weight ~ HCP_demographics_cleaned_final$Gender + HCP_demographics_cleaned_final$Age_in_Yrs + (1 | family_id/twin_status), REML = FALSE)
+summary(lmer_fit)
+
+lmer_fit <- lmer(HCP_demographics_cleaned_final$BMI ~ HCP_demographics_cleaned_final$Gender + HCP_demographics_cleaned_final$Age_in_Yrs + (1 | family_id/twin_status), REML = FALSE)
+summary(lmer_fit)
 
 
 
@@ -984,6 +1003,12 @@ write.csv(HCP_lmer_hemi_fc_G1_sex_contrast_no_brainsize_control_res, paste(resdi
 
 # SEX effects in FC G1 in model controlling for ALL morphological measures lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + MPC G1 + geodesic distance + random nested effect(family relatedness/twin status) 
 write.csv(HCP_lmer_hemi_fc_G1_sex_contrast_control_all_morphometric_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_sex_contrast_control_all_morphometric_res.csv', sep = ''), row.names = FALSE)
+
+
+
+
+##### sex*totSA contrast
+write.csv(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_sexbytotSA_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 
