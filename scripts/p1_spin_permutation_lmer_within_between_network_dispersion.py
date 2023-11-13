@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-
+# Runs spin permutation with for within and between network dispersion analyses with lmer controling for total surface area
 
 
 ### Define parameters
@@ -26,7 +26,7 @@ from enigmatoolbox.datasets import load_fsa5
 ### Define directories
 
 datadir = '/data/p_02667/sex_diff_gradients/data/'
-resdir_hcp = '/data/p_02667/sex_diff_gradients/results/HCP/'
+resdir_hcp = '/data/p_02667/sex_diff_gradients/results/HCP/SA/'
 
 
 
@@ -172,11 +172,11 @@ for i in range(len(yeo7_networks_array_perm)):
         print(f'lmer in progress...')
         
         # make a dataframe that will contain the data for linear mixed effects model (only change is the WN dispersion metric (1-7 networks)
-        df = pd.DataFrame({'WN_dispersion': sum_of_squares, 'sex': demographics_cleaned_final.Gender, 'age': demographics_cleaned_final.Age_in_Yrs, 'ICV': demographics_cleaned_final.FS_IntraCranial_Vol, 'Family_ID': demographics_cleaned_final.Family_ID, 'TwinStatus': demographics_cleaned_final.TwinStatus})
+        df = pd.DataFrame({'WN_dispersion': sum_of_squares, 'sex': demographics_cleaned_final.Gender, 'age': demographics_cleaned_final.Age_in_Yrs, 'tot_SA': demographics_cleaned_final.tot_SA, 'Family_ID': demographics_cleaned_final.Family_ID, 'TwinStatus': demographics_cleaned_final.TwinStatus})
 
         # define model
         model = sm.MixedLM.from_formula(
-            formula = "WN_dispersion ~ 1 + sex + age + ICV", 
+            formula = "WN_dispersion ~ 1 + sex + age + tot_SA", 
             data = df, 
             re_formula="1",
             groups="Family_ID",
@@ -230,11 +230,11 @@ for i in range(len(yeo7_networks_array_perm)):
                 print(f'lmer in progress...')
 
                 # make a dataframe that will contain the data for linear mixed effects model (only change is the WN dispersion metric (1-7 networks)
-                df = pd.DataFrame({'BN_dispersion': distance, 'sex': demographics_cleaned_final.Gender, 'age': demographics_cleaned_final.Age_in_Yrs, 'ICV': demographics_cleaned_final.FS_IntraCranial_Vol, 'Family_ID': demographics_cleaned_final.Family_ID, 'TwinStatus': demographics_cleaned_final.TwinStatus})
+                df = pd.DataFrame({'BN_dispersion': distance, 'sex': demographics_cleaned_final.Gender, 'age': demographics_cleaned_final.Age_in_Yrs, 'tot_SA': demographics_cleaned_final.tot_SA, 'Family_ID': demographics_cleaned_final.Family_ID, 'TwinStatus': demographics_cleaned_final.TwinStatus})
 
                 # define model
                 model = sm.MixedLM.from_formula(
-                    formula = "BN_dispersion ~ 1 + sex + age + ICV", 
+                    formula = "BN_dispersion ~ 1 + sex + age + tot_SA", 
                     data = df, 
                     re_formula="1",
                     groups="Family_ID",
@@ -256,7 +256,7 @@ for i in range(len(yeo7_networks_array_perm)):
     
 ### Clean results for export
 
-print(f'\n---- Export results at /data/p_02667/sex_diff_gradients/results/HCP/WN and BN_dispersion_perm_tval_sex_contrast_null_distr ----')
+print(f'\n---- Export results at /data/p_02667/sex_diff_gradients/results/HCP/SA/WN and BN_dispersion_perm_tval_sex_contrast_null_distr ----')
 
 # pack into arrays
 WN_dispersion_perm_tval_sex_contrast = np.array(WN_dispersion_perm_tval_sex_contrast)
