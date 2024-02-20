@@ -281,55 +281,6 @@ lmer.hcp_totSA_contrast_bysex <- function(df_dv, df_iv) {
 
 
 
-### Linear Regression HCP Connectivity lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + local_SA + random nested effect(family relatedness/twin status) 
-
-# Local SA contrast
-lmer.hcp_local_SA_contrast <- function(df_dv, df_iv, df_local_SA) {
-  
-  '
-    - fits and runs linear model to test for LOCAL SA effects, including sex, age, tot_SA and local SA, as well as random nested effect(family relatedness/twin status in the model as covariates
-    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables), df_geo (dataframe containing geodesic distance)
-    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for local SA contrast
-  '
-  
-  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
-  t_val = vector(mode = "double", length = ncol(df_dv))  
-  p_val = vector(mode = "double", length = ncol(df_dv))
-  beta_val = vector(mode = "double", length = ncol(df_dv))
-  
-  
-  # Loop over the df_dv columns (= parcels)
-  for (i in seq_along(df_dv)) {
-    
-    family_id = df_iv$Family_ID
-    twin_status = df_iv$TwinStatus
-    
-    # Fit a linear mixed effects model: DV ~ Sex + Age + tot_SA + random nested effect(family relatedness/twin status)
-    
-    # Model including both "single" random effects included in the interaction random effect (Sofie's decision)
-    lmer_fit <- lmer(df_dv[[i]] ~ df_iv$Gender + df_iv$Age_in_Yrs + df_iv$tot_SA + df_local_SA[[i]] + (1 | family_id/twin_status), REML = FALSE)
-    
-    # Extract from summary of lmer_fit the t- and p-values
-    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 age, 4 tot_SA, 5 local_SA; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
-    t_val[[i]] = summary(lmer_fit)$coefficients[5,4]
-    p_val[[i]] = summary(lmer_fit)$coefficients[5,5]
-    beta_val[[i]] = summary(lmer_fit)$coefficients[5,1]
-    
-  }
-  
-  # Calculate FDR-corrected q-values from p-values
-  q_val = p.adjust(p_val, method = "fdr")
-  
-  # Create output dataframe containing t-values, p-values, and q-values
-  output_df = data.frame(t_val, p_val, q_val, beta_val)
-  
-  return(output_df)
-}
-
-
-
-
-
 # brain volume contrast in lmer = Gradient_Eigenvalues ~ Sex + Age + B_brain_vol + random nested effect(family relatedness/twin status) 
 
 
@@ -732,16 +683,26 @@ HCP_mean_geodesic_distances = read.csv(paste(resdir_hcp, 'mean_geodesic_distance
 HCP_mean_fc_strengths_top10 = read.csv(paste(resdir_hcp, 'mean_fc_strengths_top10.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
-# Local SA
-local_SA = read.csv(paste(resdir_hcp, 'local_SA.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
-
-
-
-
 
 
 # Mean geodesic distances of mean connectivity profiles by sex (ie each subject has the mean (by seed region) of the geodesic distance of the most frequent top 10% connections for their sex)
 HCP_recomp_sub_mean_geodesic_distances_most_frequent_connections_bysexprofile = read.csv(paste(resdir_hcp, 'recomp_sub_mean_geodesic_distances_most_frequent_connections_bysexprofile.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+
+
+
+## Different thresholds used to build gradients supplementary analyses
+suppl_hemi_array_aligned_fc_G1_1 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_1.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_2 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_2.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_3 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_3.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_4 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_4.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_5 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_5.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_6 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_6.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_7 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_7.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_8 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_8.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+suppl_hemi_array_aligned_fc_G1_9 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_9.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
+
+
 
 
 
@@ -852,29 +813,6 @@ HCP_lmer_mean_fc_strengths_top10_sex_contrast_res = lmer.hcp_sex_contrast(df_dv 
 sum(HCP_lmer_mean_fc_strengths_top10_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
 
 
-##### sex effects in local SA
-
-# run model
-HCP_lmer_local_SA_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = local_SA, df_iv = HCP_demographics_cleaned_final)
-
-# number of significant parcels
-sum(HCP_lmer_local_SA_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
-
-
-
-
-
-##### Local SA contrast in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + local_SA + random nested effect(family relatedness/twin status) 
-
-# run model
-HCP_lmer_hemi_fc_G1_local_SA_contrast_res = lmer.hcp_local_SA_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final, df_local_SA = local_SA)
-HCP_lmer_fc_G1_local_SA_contrast_res = lmer.hcp_local_SA_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final, df_local_SA = local_SA)
-
-# number of significant parcels
-sum(HCP_lmer_hemi_fc_G1_local_SA_contrast_res$q_val < 0.05, na.rm=TRUE)  
-sum(HCP_lmer_fc_G1_local_SA_contrast_res$q_val < 0.05, na.rm=TRUE)  
-
-
 
 
 ##### Brain volume contrast in model = DV ~ Sex + Age + B_brain_vol + random nested effect(family relatedness/twin status)
@@ -963,27 +901,6 @@ sum(HCP_lmer_hemi_fc_G1_sex_contrast_control_all_morphometric_res$q_val < 0.05, 
 
 
 
-
-
-
-
-
-
-
-
-############ not used, from p1_main.R -> might need at some point? ##############
-
-
-# run model effects of ICV on mean geodesic distance of top10% connections computed at the individual level
-HCP_lmer_geo_icv_contrast_res = lmer.hcp_icv_contrast(df_dv = HCP_mean_geodesic_distances, df_iv = HCP_demographics_cleaned_final)
-
-# number of significant parcels
-sum(HCP_lmer_geo_icv_contrast_res$q_val < 0.05, na.rm=TRUE) 
-
-
-
-
-
 ##### sex effects for mean geodesic distance by seed region of top 10% connections (appearing most frequently by sex)
 
 # run model
@@ -991,10 +908,6 @@ HCP_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res = lmer
 
 # number of significant parcels
 sum(HCP_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res$q_val < 0.05, na.rm=TRUE)  
-
-
-
-
 
 
 
@@ -1052,6 +965,31 @@ sum(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_controlHeight_res$q_val < 0.05, na.r
 
 
 
+############################################
+# DIFFERENT THRESHOLDS for supplements
+############################################
+
+### sex effects on different thresholds used to build gradients
+
+HCP_suppl_lmer_hemi_fc_G1_1_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_1, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_2_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_2, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_3_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_3, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_4_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_4, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_5_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_5, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_6_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_6, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_7_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_7, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_8_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_8, df_iv = HCP_demographics_cleaned_final)
+HCP_suppl_lmer_hemi_fc_G1_9_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = suppl_hemi_array_aligned_fc_G1_9, df_iv = HCP_demographics_cleaned_final)
+
+
+# number of significant parcels
+sum(HCP_suppl_lmer_hemi_fc_G1_1_sex_contrast_res$q_val < 0.05, na.rm=TRUE)
+
+
+
+
+
+
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # EXPORT RESULTS 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1095,15 +1033,6 @@ write.csv(HCP_lmer_fc_G1_totSA_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_tot
 write.csv(HCP_lmer_mean_fc_strengths_top10_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mean_fc_strengths_top10_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
-# sex effects in local SA
-write.csv(HCP_lmer_local_SA_sex_contrast_res, paste(resdir_hcp, 'R_lmer_local_SA_sex_contrast_res.csv', sep = ''), row.names = FALSE)
-
-
-# Local SA contrast in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + local_SA + random nested effect(family relatedness/twin status) 
-write.csv(HCP_lmer_hemi_fc_G1_local_SA_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_local_SA_contrast_res.csv', sep = ''), row.names = FALSE)
-write.csv(HCP_lmer_fc_G1_local_SA_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_local_SA_contrast_res.csv', sep = ''), row.names = FALSE)
-
-
 # Brain volume contrast in model = DV ~ Sex + Age + B_brain_vol + random nested effect(family relatedness/twin status)
 write.csv(HCP_lmer_hemi_fc_G1_brainvol_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_brainvol_contrast_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_fc_G1_brainvol_contrast_res, paste(resdir_hcp, 'R_lmer_fc_G1_brainvol_contrast_res.csv', sep = ''), row.names = FALSE)
@@ -1131,15 +1060,29 @@ write.csv(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_res, paste(resdir_hcp, 'R_lmer
 
 
 
+##### sex effects for mean geodesic distance by seed region of top 10% connections (appearing most frequently by sex)
+write.csv(HCP_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+
+
+
 
 ##### ANTHROPOMETRIC CHECKS for supplements
-
 write.csv(HCP_lmer_hemi_fc_G1_totSA_contrast_M_res, paste(resdir_hcp, 'R_HCP_lmer_hemi_fc_G1_totSA_contrast_M_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_hemi_fc_G1_totSA_contrast_F_res, paste(resdir_hcp, 'R_HCP_lmer_hemi_fc_G1_totSA_contrast_F_res.csv', sep = ''), row.names = FALSE)
 write.csv(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_controlHeight_res, paste(resdir_hcp, 'R_HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_controlHeight_res.csv', sep = ''), row.names = FALSE)
 
 
 
+##### DIFFERENT THRESHOLDS for building gradients -> sex effects for supplements
+write.csv(HCP_suppl_lmer_hemi_fc_G1_1_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_1_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_2_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_2_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_3_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_3_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_4_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_4_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_5_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_5_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_6_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_6_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_7_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_7_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_8_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_8_sex_contrast_res.csv', sep = ''), row.names = FALSE)
+write.csv(HCP_suppl_lmer_hemi_fc_G1_9_sex_contrast_res, paste(resdir_hcp, 'HCP_suppl_lmer_hemi_fc_G1_9_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 
@@ -1147,17 +1090,7 @@ write.csv(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_controlHeight_res, paste(resdi
 
 
 
-############ not used, from p1_main.R -> might need at some point? ##############
 
 
-
-write.csv(HCP_lmer_geo_icv_contrast_res, paste(resdir_hcp, 'R_lmer_geo_icv_contrast_res.csv', sep = ''), row.names = FALSE)
-
-
-
-
-
-##### sex effects for mean geodesic distance by seed region of top 10% connections (appearing most frequently by sex)
-write.csv(HCP_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res, paste(resdir_hcp, 'R_lmer_mean_geo_most_frequent_connections_bysexprofile_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
