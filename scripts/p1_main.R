@@ -550,6 +550,53 @@ lmer.hcp_sexbyICV_contrast <- function(df_dv, df_iv) {
 
 
 
+#### interaction effects: sex * MPC/GEO
+
+# sex * total surface area interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + MPC/GEO + Sex*MPC/GEO + random nested effect(family relatedness/twin status) 
+
+lmer.hcp_sexbyMPCorGEO_contrast <- function(df_dv, df_MPC_or_GEO, df_iv) {
+  
+  '
+    - fits and runs linear model to test for interaction of sex*MPC/GEO effects, including sex, age, tot SA, MPC/GEO as well as random nested effect(family relatedness/twin status in the model as covariates
+    - to supply: df_dv (dataframe containing the dependent variable), df_iv (dataframe containing the independent variables)
+    - outputs dataframe containing t-values, p-values, and FDR-corrected q-values for SEX * MPC/GEO interaction effect
+  '
+  
+  # Create empty vectors (0s) of type "double precision" and length of len(df_dv) 
+  t_val = vector(mode = "double", length = ncol(df_dv))  
+  p_val = vector(mode = "double", length = ncol(df_dv))
+  beta_val = vector(mode = "double", length = ncol(df_dv))
+  
+  
+  # Loop over the df_dv columns (= parcels)
+  for (i in seq_along(df_dv)) {
+    
+    family_id = df_iv$Family_ID
+    twin_status = df_iv$TwinStatus
+    
+    # Fit a linear mixed effects model: DV ~ Sex + Age + tot_SA + MPC/GEO + Sex*MPC/GEO + random nested effect(family relatedness/twin status)
+    lmer_fit <- lmer(scale(df_dv[[i]]) ~ df_iv$Gender + scale(df_iv$Age_in_Yrs) + scale(df_iv$tot_SA) + scale(df_MPC_or_GEO[[i]]) + df_iv$Gender*scale(df_MPC_or_GEO[[i]]) + (1 | family_id/twin_status), REML = FALSE)
+    
+    # Extract from summary of lmer_fit the t- and p-values
+    # summary(lmer_fit)$coefficients[row, column]; row = 1 intercept, 2 sex, 3 age, 4 tot_SA, 5 df_MPC_or_GEO, 6 sex*df_MPC_or_GEO; columns = 1 Estimate, 2 Std. Error, 3 df, 4 t-value, 5 p-value
+    t_val[[i]] = summary(lmer_fit)$coefficients[6,4]
+    p_val[[i]] = summary(lmer_fit)$coefficients[6,5]
+    beta_val[[i]] = summary(lmer_fit)$coefficients[6,1]
+    
+  }
+  
+  # Calculate FDR-corrected q-values from p-values
+  q_val = p.adjust(p_val, method = "fdr")
+  
+  # Create output dataframe containing t-values, p-values, and q-values
+  output_df = data.frame(t_val, p_val, q_val, beta_val)
+  
+  return(output_df)
+}
+
+
+
+
 
 
 
@@ -699,6 +746,8 @@ suppl_hemi_array_aligned_fc_G1_8 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_
 suppl_hemi_array_aligned_fc_G1_9 = read.csv(paste(resdir_hcp, 'suppl_hemi_array_aligned_fc_G1_9.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
+## Reviewer response CT analyses
+HCP_ct_schaefer400 = read.csv(paste(resdir_hcp, 'HCP_ct_schaefer400.csv', sep = ''), fileEncoding = 'UTF-8-BOM')
 
 
 
@@ -829,21 +878,17 @@ sum(HCP_lmer_hemi_fc_G1_icv_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 # run model
 HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_res = lmer.hcp_sexbytotSA_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
-HCP_lmer_fc_G1_sexbytotSA_contrast_res = lmer.hcp_sexbytotSA_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
 
 # number of significant parcels
 sum(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_res$q_val < 0.05, na.rm=TRUE) 
-sum(HCP_lmer_fc_G1_sexbytotSA_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
 ## sex * TBV interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + TBV + Sex*TBV + random nested effect(family relatedness/twin status) 
 
 # run model
 HCP_lmer_hemi_fc_G1_sexbyTBV_contrast_res = lmer.hcp_sexbyTBV_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
-HCP_lmer_fc_G1_sexbyTBV_contrast_res = lmer.hcp_sexbyTBV_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
 
 # number of significant parcels
-sum(HCP_lmer_hemi_fc_G1_sexbyTBV_contrast_res$q_val < 0.05, na.rm=TRUE) 
 sum(HCP_lmer_hemi_fc_G1_sexbyTBV_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
@@ -851,11 +896,28 @@ sum(HCP_lmer_hemi_fc_G1_sexbyTBV_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 # run model
 HCP_lmer_hemi_fc_G1_sexbyICV_contrast_res = lmer.hcp_sexbyICV_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
-HCP_lmer_fc_G1_sexbyICV_contrast_res = lmer.hcp_sexbyICV_contrast(df_dv = HCP_array_aligned_fc_G1, df_iv = HCP_demographics_cleaned_final)
 
 # number of significant parcels
 sum(HCP_lmer_hemi_fc_G1_sexbyICV_contrast_res$q_val < 0.05, na.rm=TRUE) 
-sum(HCP_lmer_fc_G1_sexbyICV_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
+
+## sex * MPC interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + MPC + Sex*MPC + random nested effect(family relatedness/twin status) 
+
+# run model
+HCP_lmer_hemi_fc_G1_sexbyMPC_contrast_res = lmer.hcp_sexbyMPCorGEO_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_MPC_or_GEO = hemi_array_aligned_MPC_G1, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_hemi_fc_G1_sexbyMPC_contrast_res$q_val < 0.05, na.rm=TRUE) 
+
+
+## sex * Geodesic distance interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + geodesic_distance + Sex*geodesic_distance + random nested effect(family relatedness/twin status) 
+
+# run model
+HCP_lmer_hemi_fc_G1_sexbygeo_contrast_res = lmer.hcp_sexbyMPCorGEO_contrast(df_dv = HCP_hemi_array_aligned_fc_G1, df_MPC_or_GEO = HCP_mean_geodesic_distances, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_lmer_hemi_fc_G1_sexbygeo_contrast_res$q_val < 0.05, na.rm=TRUE) 
 
 
 
@@ -968,6 +1030,13 @@ sum(HCP_suppl_lmer_hemi_fc_G1_1_sex_contrast_res$q_val < 0.05, na.rm=TRUE)
 
 
 
+## Reviewer response CT analyses
+# sex effects
+HCP_suppl_lmer_ct_sex_contrast_res = lmer.hcp_sex_contrast(df_dv = HCP_ct_schaefer400, df_iv = HCP_demographics_cleaned_final)
+
+# number of significant parcels
+sum(HCP_suppl_lmer_ct_sex_contrast_res$q_val < 0.05, na.rm=TRUE)
+
 
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1028,6 +1097,11 @@ write.csv(HCP_lmer_hemi_fc_G1_sex_contrast_control_all_morphometric_res, paste(r
 ##### sex*totSA contrast
 write.csv(HCP_lmer_hemi_fc_G1_sexbytotSA_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_sexbytotSA_contrast_res.csv', sep = ''), row.names = FALSE)
 
+# sex*MPC contrast
+write.csv(HCP_lmer_hemi_fc_G1_sexbyMPC_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_sexbyMPC_contrast_res.csv', sep = ''), row.names = FALSE)
+
+# sex*geodesic distance contrast
+write.csv(HCP_lmer_hemi_fc_G1_sexbygeo_contrast_res, paste(resdir_hcp, 'R_lmer_hemi_fc_G1_sexbygeo_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 
@@ -1058,11 +1132,83 @@ write.csv(HCP_suppl_lmer_hemi_fc_G1_9_sex_contrast_res, paste(resdir_hcp, 'HCP_s
 
 
 
+# sex effects in CT
+write.csv(HCP_suppl_lmer_ct_sex_contrast_res, paste(resdir_hcp, 'R_suppl_lmer_ct_sex_contrast_res.csv', sep = ''), row.names = FALSE)
 
 
 
 
 
 
+
+# ------------------------------------------------------------------------------------------------
+
+### power analyses
+library(simr)
+
+## for sex * total surface area interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + Sex*tot_SA + random nested effect(family relatedness/twin status) 
+
+# specify model (for 1 parcel)
+
+
+family_id = HCP_demographics_cleaned_final$Family_ID
+twin_status = HCP_demographics_cleaned_final$TwinStatus
+
+gradient_val <- scale(HCP_hemi_array_aligned_fc_G1[[1]])
+sex <- HCP_demographics_cleaned_final$Gender
+age <- scale(HCP_demographics_cleaned_final$Age_in_Yrs)
+totSA <- scale(HCP_demographics_cleaned_final$tot_SA) 
+
+
+
+lmer_fit <- lmer(gradient_val ~ sex + age + totSA + sex*totSA +  (1 | family_id/twin_status), REML = FALSE)
+
+fixef(lmer_fit)["sexM:totSA"] <- -0.01
+power <- powerSim(lmer_fit, nsim = 200, test= fixed("sexM:totSA", method = "z"))
+power
+
+
+
+
+lmer_fit <- lmer(gradient_val ~ sex + age + totSA + sex:totSA +  (1 | family_id/twin_status), REML = FALSE)
+
+fixef(lmer_fit)["sexM"] <- 2
+power <- powerSim(lmer_fit, nsim = 200, test= fixed("sexM", method = "t"))
+power
+
+
+fixef(lmer_fit) <- 0.2
+
+
+
+
+
+summary(lmer_fit)$coefficients[5,1]
+
+
+
+fixed_effect_variable='task'
+fixef(lmer_fit) <- fixef(lmer_fit)["sexM:totSA"]
+
+power <- powerSim(lmer_fit, nsim = 200)
+power
+
+xname='HCP_demographics_cleaned_final$GenderM', method = 'z'
+
+tests 13
+Examples
+getSimrOption("nsim")
+oldopts <- simrOptions(nsim=5)
+getSimrOption("nsim")
+simrOptions(oldopts)
+getSimrOption("nsim")
+tests Specify a statistical test to apply
+Description
+Specify a statistical test to apply
+Usage
+fixed(
+  xname,
+  method = c("z", "t", "f", "chisq", "anova", "lr", "sa", "kr", "pb")
+)
 
 
