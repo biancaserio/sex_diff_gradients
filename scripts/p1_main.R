@@ -1148,67 +1148,30 @@ library(simr)
 
 ## for sex * total surface area interaction effect in lmer = Gradient_Eigenvalues ~ Sex + Age + tot_SA + Sex*tot_SA + random nested effect(family relatedness/twin status) 
 
-# specify model (for 1 parcel)
+# specify model (for 1 parcel -> does not matter which one, the structure of the model matters I think
 
 
-family_id = HCP_demographics_cleaned_final$Family_ID
-twin_status = HCP_demographics_cleaned_final$TwinStatus
+df <- data.frame(
+  family_id = HCP_demographics_cleaned_final$Family_ID,
+  twin_status = HCP_demographics_cleaned_final$TwinStatus,
+  gradient_val <- scale(HCP_hemi_array_aligned_fc_G1[[1]]),
+  sex <- HCP_demographics_cleaned_final$Gender,
+  age <- scale(HCP_demographics_cleaned_final$Age_in_Yrs),
+  totSA <- scale(HCP_demographics_cleaned_final$tot_SA) 
+)
 
-gradient_val <- scale(HCP_hemi_array_aligned_fc_G1[[1]])
-sex <- HCP_demographics_cleaned_final$Gender
-age <- scale(HCP_demographics_cleaned_final$Age_in_Yrs)
-totSA <- scale(HCP_demographics_cleaned_final$tot_SA) 
 
 
+lmer_fit <- lmer(gradient_val ~ sex + age + totSA + sex*totSA +  (1 | family_id/twin_status), REML = FALSE, data = df)
 
-lmer_fit <- lmer(gradient_val ~ sex + age + totSA + sex*totSA +  (1 | family_id/twin_status), REML = FALSE)
-
-fixef(lmer_fit)["sexM:totSA"] <- -0.01
+fixef(lmer_fit)["sexM:totSA"] <- 0.315  # specify the largest effect that we observe with a sex*morphometric variable interaction effect on S-A axis loadings
 power <- powerSim(lmer_fit, nsim = 200, test= fixed("sexM:totSA", method = "z"))
 power
 
-
-
-
-lmer_fit <- lmer(gradient_val ~ sex + age + totSA + sex:totSA +  (1 | family_id/twin_status), REML = FALSE)
-
-fixef(lmer_fit)["sexM"] <- 2
-power <- powerSim(lmer_fit, nsim = 200, test= fixed("sexM", method = "t"))
-power
-
-
-fixef(lmer_fit) <- 0.2
-
+lastResult()$errors
 
 
 
 
 summary(lmer_fit)$coefficients[5,1]
-
-
-
-fixed_effect_variable='task'
-fixef(lmer_fit) <- fixef(lmer_fit)["sexM:totSA"]
-
-power <- powerSim(lmer_fit, nsim = 200)
-power
-
-xname='HCP_demographics_cleaned_final$GenderM', method = 'z'
-
-tests 13
-Examples
-getSimrOption("nsim")
-oldopts <- simrOptions(nsim=5)
-getSimrOption("nsim")
-simrOptions(oldopts)
-getSimrOption("nsim")
-tests Specify a statistical test to apply
-Description
-Specify a statistical test to apply
-Usage
-fixed(
-  xname,
-  method = c("z", "t", "f", "chisq", "anova", "lr", "sa", "kr", "pb")
-)
-
 
