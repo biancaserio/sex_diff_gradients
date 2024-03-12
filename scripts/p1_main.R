@@ -1164,7 +1164,9 @@ df <- data.frame(
 
 lmer_fit <- lmer(gradient_val ~ sex + age + totSA + sex*totSA +  (1 | family_id/twin_status), REML = FALSE, data = df)
 
+fixef(lmer_fit)["sexM:totSA"] <- 0.2  # specify the minimum interesting effect (standard practice for computing power) for sex*morphometric variable interaction effect on S-A axis loadings -> I chose small effect for standardized beta
 fixef(lmer_fit)["sexM:totSA"] <- 0.315  # specify the largest effect that we observe with a sex*morphometric variable interaction effect on S-A axis loadings
+
 power <- powerSim(lmer_fit, nsim = 200, test= fixed("sexM:totSA", method = "z"))
 power
 
