@@ -1,7 +1,16 @@
-Sex differences in functional cortical organization reflect differences in network topology rather than cortical morphometry
+This is the repository associated with the publication 
 
-Bianca Serio*, Meike D. Hettwer, Lisa Wiersch, Giacomo Bignardi, Julia Sacher, Susanne Weis, Simon B. Eickhoff, Sofie L. Valk*
+## Sex differences in functional cortical organization reflect differences in network topology rather than cortical morphometry
 
-* Correspondence to:
-Bianca Serio (b.serio@fz-juelich.de)
-Sofie L. Valk (valk@cbs.mpg.de)
+Please address any questions about the analyses or code to [Bianca Serio](mailto:serio@cbs.mpg.de)
+
+Preprint available [here](https://www.biorxiv.org/content/10.1101/2023.11.23.568437v1)
+
+-----
+
+Research poster presented at:
+- 2023 Annual Meeting of the Organization for Human Brain Mapping (OHBM)
+- 2024 Annual meeting of the Organization for the Study of Sex Differences (OSSD)
+
+![alt text](https://github.com/biancaserio/sex_diff_gradients/blob/master/Poster.png?raw=true)
+
