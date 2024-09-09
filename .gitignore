@@ -5,3 +5,5 @@ example_data/
 scripts/ENIGMA/
 scripts/to_delete_eventually/
 scripts/not_included_in_project_but_could_be_useful_in_future/
+scripts/p1_suppl.R
+.gitignore
