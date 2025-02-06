@@ -1,7 +1,7 @@
 # Sex differences in functional brain organization
 
 ### This is the repository for the publication:
-Bianca Serio, Meike D. Hettwer, Lisa Wiersch, Giacomo Bignardi, Julia Sacher, Susanne Weis, Simon B. Eickhoff, & Sofie L. Valk, (2024) **Sex differences in functional cortical organization reflect differences in network topology rather than cortical morphometry**. _Nature Communications_, 15, 7714. https://doi.org/10.1038/s41467-024-51942-1.
+Bianca Serio, Meike D. Hettwer, Lisa Wiersch, Giacomo Bignardi, Julia Sacher, Susanne Weis, Simon B. Eickhoff, & Sofie L. Valk (2024) **Sex differences in functional cortical organization reflect differences in network topology rather than cortical morphometry**. _Nature Communications_, 15, 7714. https://doi.org/10.1038/s41467-024-51942-1.
 
 Preprint version available [here](https://www.biorxiv.org/content/10.1101/2023.11.23.568437v1)
 
