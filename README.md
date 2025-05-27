@@ -20,7 +20,7 @@ Preprint version available [here](https://www.biorxiv.org/content/10.1101/2023.1
 - `p1_main.ipynb` computes and visualizes main analyses
 - `p1_main.R` computes linear mixed effects models for main analyses
 - `p1_connectivity_profiles_sex_diff.py`  runs Chi Square test of independence on contingency tables, testing for sex differences in the odds of connections belonging to the seed's top 10% functional connections at the individual level
-- `p1_spin_permutation_lmer_within_between_network_dispersion.py` spin permutation test to construct empirical null distribution of beta values for within and between network dispersion analyses
+- `p1_spin_permutation_lmer_within_between_network_dispersion_betavals.py` spin permutation test to construct empirical null distribution of beta values for within and between network dispersion analyses
 
 **3. Functions**
 - `p1_myfunctions.ipynb` contains functions used for main analyses
